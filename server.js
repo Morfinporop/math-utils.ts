@@ -1,23 +1,28 @@
-const _f = require('fastify')({ logger: false });
-const _p = require('path');
-const _c = require('crypto');
+import fastify from 'fastify';
+import fastifyStatic from '@fastify/static';
+import fastifyWebsocket from '@fastify/websocket';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import crypto from 'crypto';
 
-// Хранилище сессий в памяти
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const _f = fastify({ logger: false });
 const _M = new Map();
 const _ROT = 300000;
 
-// Тот же генератор ID, что и на клиенте
 const _gid = (s) => {
     const b = Math.floor(Date.now() / _ROT);
-    return _c.createHash('sha256').update(s + b.toString()).digest('hex').slice(0, 16);
+    return crypto.createHash('sha256').update(s + b.toString()).digest('hex').slice(0, 16);
 };
 
-_f.register(require('@fastify/static'), { 
-    root: _p.join(__dirname, 'dist'),
+_f.register(fastifyStatic, { 
+    root: path.join(__dirname, 'dist'),
     prefix: '/' 
 });
 
-_f.register(require('@fastify/websocket'));
+_f.register(fastifyWebsocket);
 
 _f.register(async (i) => {
     i.get('/v1/asset-stream', { websocket: true }, (s, q) => {
@@ -49,7 +54,6 @@ _f.register(async (i) => {
     });
 });
 
-// Маскировка под 404 для всех неизвестных путей
 _f.setNotFoundHandler((q, r) => {
     r.status(404).sendFile('index.html');
 });
