@@ -131,7 +131,7 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
             </div>
           ) : (
             <>
-              <input type="text" value={text} onChange={e => setText(e.target.value)} placeholder={t('typeMessage')}
+              <input type="text" value={text} onChange={e => setText(e.target.value.slice(0, 2000))} maxLength={2000} placeholder={t('typeMessage')}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); send(); } }}
                 style={{ flex: 1, padding: '12px 18px', borderRadius: 24, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text)', fontSize: 14, outline: 'none' }} />
               {!isBot && <button onClick={startRec} style={circBtn('var(--bg2)', 'var(--text)')}><IconMic size={18} /></button>}

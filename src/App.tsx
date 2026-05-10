@@ -7,7 +7,7 @@ import { store, panicDestroy } from './store';
 import { useStore } from './useStore';
 import { settingsStore } from './settings-store';
 import { _0xdead } from './core-v1';
-import { initNetwork, sendNetMessage, triggerPanic, authAdmin, sendBlock, sendUnblock, sendClearChat, sendDeleteChat, sendAsAI, updateServerProfile } from './network-v1';
+import { initNetwork, sendNetMessage, sendBlock, sendUnblock, sendClear, sendAsAI, updateProfile, panic } from './network-v1';
 import { askAnoAI } from './ai-service';
 import { IconSettings, IconUser, IconSearch } from './icons';
 
@@ -72,7 +72,7 @@ function App() {
   // ESC panic
   useEffect(() => {
     let timer: any = null;
-    const d = (e: KeyboardEvent) => { if (e.key === 'Escape' && !timer) timer = setTimeout(() => { triggerPanic(); panicDestroy(); window.location.replace('about:blank'); }, 1500); };
+    const d = (e: KeyboardEvent) => { if (e.key === 'Escape' && !timer) timer = setTimeout(() => { panic(); panicDestroy(); window.location.replace('about:blank'); }, 1500); };
     const u = (e: KeyboardEvent) => { if (e.key === 'Escape') { clearTimeout(timer); timer = null; } };
     window.addEventListener('keydown', d); window.addEventListener('keyup', u);
     return () => { window.removeEventListener('keydown', d); window.removeEventListener('keyup', u); };
@@ -91,6 +91,8 @@ function App() {
   // Auth is now handled by doAuth()
 
   const handleLogout = () => { try { localStorage.removeItem('llb_auth'); } catch {} panicDestroy(); setScreen('login'); setName(''); setPassword(''); setEmail(''); setAdminMode(false); };
+
+  const handlePanic = () => { panic(); panicDestroy(); window.location.reload(); };
 
   const openProfile = () => {
     if (!profile) return;
@@ -114,8 +116,29 @@ function App() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: (v: string) => void) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    // Compress image to max 150x150 for avatar, 400x150 for banner
+    const img = new Image();
     const reader = new FileReader();
-    reader.onloadend = () => setter(reader.result as string);
+    reader.onloadend = () => {
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxW = 200;
+        const maxH = 100;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxW) { h = h * maxW / w; w = maxW; }
+        if (h > maxH) { w = w * maxH / h; h = maxH; }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, w, h);
+          setter(canvas.toDataURL('image/jpeg', 0.3));
+        }
+      };
+      img.src = reader.result as string;
+    };
     reader.readAsDataURL(file);
   };
 
@@ -169,7 +192,6 @@ function App() {
             if (data.ok) {
               store.setProfile({ seed: data.seed, currentId: data.gid, displayName: data.name, username: data.username, publicKeyJwk: '', privateKey: null, publicKey: null, isOwner: data.isOwner, description: data.description, avatar: data.avatar, banner: data.banner });
               initNetwork(data.seed, data.name);
-              if (data.isOwner) setTimeout(() => authAdmin(), 1500);
               setScreen('chat');
             }
           }).catch(() => {});
@@ -188,7 +210,7 @@ function App() {
       if (!res.ok) { setAuthError(data.error === 'email_exists' ? (settingsStore.get().lang === 'ru' ? 'Email уже зарегистрирован' : 'Email already exists') : data.error === 'invalid' ? (settingsStore.get().lang === 'ru' ? 'Неверный email или пароль' : 'Wrong email or password') : 'Error'); return; }
       store.setProfile({ seed: data.seed, currentId: data.gid, displayName: data.name, username: data.username, publicKeyJwk: '', privateKey: null, publicKey: null, isOwner: data.isOwner, description: data.description, avatar: data.avatar, banner: data.banner });
       initNetwork(data.seed, data.name);
-      if (data.isOwner) setTimeout(() => authAdmin(), 1500);
+      // isOwner flag stored in profile for blue checkmark
       if (rememberMe) { try { localStorage.setItem('llb_auth', JSON.stringify({ email, password })); } catch {} }
       setScreen('chat');
     } catch { setAuthError('Connection error'); }
@@ -239,7 +261,7 @@ function App() {
                     <div style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 4 }}>{settingsStore.get().lang === 'ru' ? 'Как вас зовут?' : 'What is your name?'}</div>
                     <div style={{ fontSize: 12, color: '#555' }}>{settingsStore.get().lang === 'ru' ? 'Это имя увидят другие' : 'Others will see this name'}</div>
                   </div>
-                  <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={t('enterName')} style={inp} autoFocus
+                  <input type="text" value={name} onChange={e => setName(e.target.value.slice(0, 16))} placeholder={t('enterName')} maxLength={16} style={inp} autoFocus
                     onKeyDown={e => e.key === 'Enter' && nextStep()} />
                 </>
               )}
@@ -251,9 +273,9 @@ function App() {
                     <div style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 4 }}>{settingsStore.get().lang === 'ru' ? `Привет, ${name}!` : `Hello, ${name}!`}</div>
                     <div style={{ fontSize: 12, color: '#555' }}>{settingsStore.get().lang === 'ru' ? 'Создайте аккаунт' : 'Create your account'}</div>
                   </div>
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" style={inp} autoFocus
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value.slice(0, 50))} placeholder="Email" maxLength={50} style={inp} autoFocus
                     onKeyDown={e => e.key === 'Enter' && nextStep()} />
-                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={t('enterPassword')} style={inp}
+                  <input type="password" value={password} onChange={e => setPassword(e.target.value.slice(0, 32))} placeholder={t('enterPassword')} maxLength={32} style={inp}
                     onKeyDown={e => e.key === 'Enter' && nextStep()} />
                 </>
               )}
@@ -261,9 +283,9 @@ function App() {
               {/* Login */}
               {!isReg && (
                 <>
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" style={inp} autoFocus
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value.slice(0, 50))} placeholder="Email" maxLength={50} style={inp} autoFocus
                     onKeyDown={e => e.key === 'Enter' && nextStep()} />
-                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={t('enterPassword')} style={inp}
+                  <input type="password" value={password} onChange={e => setPassword(e.target.value.slice(0, 32))} placeholder={t('enterPassword')} maxLength={32} style={inp}
                     onKeyDown={e => e.key === 'Enter' && nextStep()} />
                 </>
               )}
@@ -349,7 +371,7 @@ function App() {
               style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text)', fontSize: 13, outline: 'none', resize: 'none', height: 60 }} />
           </div>
 
-          <button onClick={() => { saveProfile(); updateServerProfile({ name: editName, description: editDesc, avatar: editAvatar }); }} style={{ width: '100%', padding: 12, borderRadius: 8, background: 'var(--accent)', color: 'var(--bg)', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+          <button onClick={() => { saveProfile(); updateProfile({ name: editName, description: editDesc, avatar: editAvatar, banner: editBanner }); }} style={{ width: '100%', padding: 12, borderRadius: 8, background: 'var(--accent)', color: 'var(--bg)', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
             {t('save')}
           </button>
         </div>
@@ -362,7 +384,7 @@ function App() {
     <div style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y, zIndex: 2000, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 10, padding: 4, minWidth: 160, boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}>
       {[
         { label: t('profile'), action: () => { openUserProfile(contextMenu.id); } },
-        { label: t('clearChat'), action: () => { store.clearMessages(contextMenu.id); sendClearChat(contextMenu.id); } },
+        { label: t('clearChat'), action: () => { store.clearMessages(contextMenu.id); sendClear(contextMenu.id); } },
         ...(store.getContact(contextMenu.id)?.blockedByThem ? [] : [{
           label: store.getContact(contextMenu.id)?.blockedByMe
             ? (settingsStore.get().lang === 'ru' ? 'Разблокировать' : 'Unblock')
@@ -373,7 +395,7 @@ function App() {
             else { store.blockContact(contextMenu.id); sendBlock(contextMenu.id); } 
           }
         }]),
-        { label: t('deleteChat'), action: () => { sendDeleteChat(contextMenu.id); removeContact(contextMenu.id); if (selectedChat === contextMenu.id) setSelectedChat(null); }, danger: true },
+        { label: t('deleteChat'), action: () => { sendClear(contextMenu.id); removeContact(contextMenu.id); if (selectedChat === contextMenu.id) setSelectedChat(null); }, danger: true },
       ].map((item, i) => (
         <button key={i} onClick={() => { item.action(); setContextMenu(null); }}
           style={{ width: '100%', padding: '10px 14px', textAlign: 'left', fontSize: 13, color: (item as any).danger ? 'var(--danger)' : 'var(--text)', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 6, display: 'block' }}>
@@ -518,7 +540,7 @@ function App() {
         )}
 
         <ChatList contacts={contacts} selectedChat={selectedChat} onSelectChat={handleSelectChat}
-          onPanic={() => { triggerPanic(); panicDestroy(); window.location.reload(); }}
+          onPanic={handlePanic}
           msgCounts={getUnreadCount} onContextMenu={handleContextMenu} />
       </div>
 
