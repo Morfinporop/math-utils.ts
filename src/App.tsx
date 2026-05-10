@@ -29,9 +29,10 @@ function App() {
 
   const doSearch = async (q: string) => {
     setSearchQ(q);
-    if (q.length < 2) { setSearchResults([]); return; }
+    const clean = q.replace(/^@/, '').trim();
+    if (clean.length < 2) { setSearchResults([]); return; }
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+      const res = await fetch(`/api/search?q=${encodeURIComponent(clean)}`);
       if (res.ok) {
         const data = await res.json();
         setSearchResults(data.filter((r: any) => r.gid !== profile?.currentId && !contacts.has(r.gid)));
@@ -149,6 +150,7 @@ function App() {
   };
 
   const [authMode, setAuthMode] = useState<'register' | 'login'>('register');
+  const [authStep, setAuthStep] = useState(0); // 0: name, 1: email+pass
   const [email, setEmail] = useState('');
   const [authError, setAuthError] = useState('');
 
@@ -170,38 +172,91 @@ function App() {
 
   // === LOGIN / REGISTER ===
   if (screen === 'login') {
-    const inputStyle: React.CSSProperties = { width: '100%', padding: '15px 18px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 15, outline: 'none' };
+    const inp: React.CSSProperties = { width: '100%', padding: '16px 20px', borderRadius: 14, border: 'none', background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 16, outline: 'none', transition: 'all 0.2s' };
+    const isReg = authMode === 'register';
+    const regStep1 = isReg && authStep === 0;
+    const regStep2 = isReg && authStep === 1;
+
+    const nextStep = () => {
+      if (regStep1 && name.trim()) setAuthStep(1);
+      if (regStep2 || !isReg) doAuth();
+    };
+
     return (
-      <div style={{ minHeight: '100vh', background: '#06060e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: 420, padding: 24 }}>
-          <div style={{ textAlign: 'center', marginBottom: 36 }}>
-            <h1 style={{ fontSize: 48, fontWeight: 900, color: '#fff', letterSpacing: '0.2em' }}>LLB</h1>
-            <p style={{ fontSize: 13, color: '#666', letterSpacing: '0.1em' }}>{t('llbFull')}</p>
-          </div>
-          <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)', borderRadius: 20, padding: 28, border: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #06060e 0%, #0d0d1a 50%, #06060e 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '100%', maxWidth: 400, padding: 24 }}>
+          <div style={{ marginBottom: 48 }} />
+
+          {/* Card */}
+          <div style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(30px)', borderRadius: 24, padding: 32, border: '1px solid rgba(255,255,255,0.06)' }}>
             {/* Tabs */}
-            <div style={{ display: 'flex', marginBottom: 20, borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <button onClick={() => setAuthMode('register')} style={{ flex: 1, padding: '10px', fontSize: 13, border: 'none', cursor: 'pointer', background: authMode === 'register' ? '#fff' : 'transparent', color: authMode === 'register' ? '#000' : '#666', fontWeight: 600 }}>
+            <div style={{ display: 'flex', marginBottom: 28, borderRadius: 12, overflow: 'hidden', background: 'rgba(255,255,255,0.04)' }}>
+              <button onClick={() => { setAuthMode('register'); setAuthStep(0); }} style={{ flex: 1, padding: '12px', fontSize: 13, border: 'none', cursor: 'pointer', background: isReg ? 'rgba(255,255,255,0.1)' : 'transparent', color: isReg ? '#fff' : '#555', fontWeight: 600, transition: 'all 0.2s' }}>
                 {settingsStore.get().lang === 'ru' ? 'Регистрация' : 'Register'}
               </button>
-              <button onClick={() => setAuthMode('login')} style={{ flex: 1, padding: '10px', fontSize: 13, border: 'none', cursor: 'pointer', background: authMode === 'login' ? '#fff' : 'transparent', color: authMode === 'login' ? '#000' : '#666', fontWeight: 600 }}>
+              <button onClick={() => setAuthMode('login')} style={{ flex: 1, padding: '12px', fontSize: 13, border: 'none', cursor: 'pointer', background: !isReg ? 'rgba(255,255,255,0.1)' : 'transparent', color: !isReg ? '#fff' : '#555', fontWeight: 600, transition: 'all 0.2s' }}>
                 {settingsStore.get().lang === 'ru' ? 'Вход' : 'Login'}
               </button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {authMode === 'register' && (
-                <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={t('enterName')} style={inputStyle}
-                  onKeyDown={e => e.key === 'Enter' && doAuth()} />
+
+            {/* Step indicator for register */}
+            {isReg && (
+              <div style={{ display: 'flex', gap: 8, marginBottom: 24, justifyContent: 'center' }}>
+                <div style={{ width: 32, height: 3, borderRadius: 2, background: '#fff', opacity: authStep === 0 ? 1 : 0.2, transition: 'opacity 0.3s' }} />
+                <div style={{ width: 32, height: 3, borderRadius: 2, background: '#fff', opacity: authStep === 1 ? 1 : 0.2, transition: 'opacity 0.3s' }} />
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Register Step 1: Name */}
+              {regStep1 && (
+                <>
+                  <div style={{ textAlign: 'center', marginBottom: 8 }}>
+                    <div style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 4 }}>{settingsStore.get().lang === 'ru' ? 'Как вас зовут?' : 'What is your name?'}</div>
+                    <div style={{ fontSize: 12, color: '#555' }}>{settingsStore.get().lang === 'ru' ? 'Это имя увидят другие' : 'Others will see this name'}</div>
+                  </div>
+                  <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={t('enterName')} style={inp} autoFocus
+                    onKeyDown={e => e.key === 'Enter' && nextStep()} />
+                </>
               )}
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" style={inputStyle}
-                onKeyDown={e => e.key === 'Enter' && doAuth()} />
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={t('enterPassword')} style={inputStyle}
-                onKeyDown={e => e.key === 'Enter' && doAuth()} />
+
+              {/* Register Step 2: Email + Password */}
+              {regStep2 && (
+                <>
+                  <div style={{ textAlign: 'center', marginBottom: 8 }}>
+                    <div style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 4 }}>{settingsStore.get().lang === 'ru' ? `Привет, ${name}!` : `Hello, ${name}!`}</div>
+                    <div style={{ fontSize: 12, color: '#555' }}>{settingsStore.get().lang === 'ru' ? 'Создайте аккаунт' : 'Create your account'}</div>
+                  </div>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" style={inp} autoFocus
+                    onKeyDown={e => e.key === 'Enter' && nextStep()} />
+                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={t('enterPassword')} style={inp}
+                    onKeyDown={e => e.key === 'Enter' && nextStep()} />
+                </>
+              )}
+
+              {/* Login */}
+              {!isReg && (
+                <>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" style={inp} autoFocus
+                    onKeyDown={e => e.key === 'Enter' && nextStep()} />
+                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={t('enterPassword')} style={inp}
+                    onKeyDown={e => e.key === 'Enter' && nextStep()} />
+                </>
+              )}
+
               {authError && <div style={{ color: '#ff4444', fontSize: 12, textAlign: 'center' }}>{authError}</div>}
-              <button onClick={doAuth}
-                style={{ width: '100%', padding: 16, borderRadius: 12, background: '#fff', color: '#000', fontSize: 16, fontWeight: 700, border: 'none', cursor: 'pointer' }}>
-                {authMode === 'register' ? t('register') : t('enter' as any)}
-              </button>
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                {regStep2 && (
+                  <button onClick={() => setAuthStep(0)} style={{ padding: '16px 20px', borderRadius: 14, background: 'rgba(255,255,255,0.06)', color: '#888', fontSize: 14, border: 'none', cursor: 'pointer' }}>
+                    {settingsStore.get().lang === 'ru' ? 'Назад' : 'Back'}
+                  </button>
+                )}
+                <button onClick={nextStep}
+                  style={{ flex: 1, padding: 16, borderRadius: 14, background: '#fff', color: '#000', fontSize: 16, fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
+                  {regStep1 ? (settingsStore.get().lang === 'ru' ? 'Далее' : 'Next') : (isReg ? t('register') : (settingsStore.get().lang === 'ru' ? 'Войти' : 'Sign In'))}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -249,8 +304,7 @@ function App() {
             <span style={{ fontSize: 18, fontWeight: 700 }}>{profile.displayName}</span>
             {isOwner && <svg width="18" height="18" viewBox="0 0 24 24" fill="#3b82f6"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 4 }}>@{profile.username}</div>
-          <div style={{ fontSize: 10, color: 'var(--text3)', fontFamily: 'monospace', marginBottom: 16 }}>{profile.currentId}</div>
+          <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 16 }}>@{profile.username}</div>
 
           {!isOwner && (
             <div style={{ marginBottom: 10 }}>

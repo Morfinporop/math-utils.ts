@@ -43,7 +43,7 @@ class EphemeralStore {
   constructor() {
     this._ti.push(setInterval(() => this._purge(), 60_000));
     this._ti.push(setInterval(() => this._rotate(), 24 * 3600_000));
-    this.addContact('AnoAI_bot', { displayName: 'AnoAI_bot', currentId: 'AnoAI_bot', publicKey: '', lastSeen: Date.now() });
+    this.addContact('AnoAI_bot', { displayName: 'AnoAI_bot', currentId: 'AnoAI_bot', publicKey: '', lastSeen: Date.now(), description: 'AnoAI — нейросеть LLB мессенджера. Спроси что угодно!' });
   }
 
   subscribe(fn: Listener) { this._l.add(fn); return () => { this._l.delete(fn); }; }
