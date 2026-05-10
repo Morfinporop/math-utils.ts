@@ -9,7 +9,7 @@ import { settingsStore } from './settings-store';
 import { _0xdead } from './core-v1';
 import { initNetwork, sendNetMessage, triggerPanic, authAdmin, sendBlock, sendUnblock, sendClearChat, sendAsAI, updateServerProfile } from './network-v1';
 import { askAnoAI } from './ai-service';
-import { IconSettings, IconUser } from './icons';
+import { IconSettings, IconUser, IconSearch } from './icons';
 
 function App() {
   const { profile, contacts, getMessages, addMessage, removeContact, getMessageCount, isAdmin } = useStore();
@@ -22,7 +22,38 @@ function App() {
   const [adminUsers, setAdminUsers] = useState<any[]>([]);
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{x:number;y:number;id:string}|null>(null);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQ, setSearchQ] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [, tick] = useState(0);
+
+  const doSearch = async (q: string) => {
+    setSearchQ(q);
+    if (q.length < 2) { setSearchResults([]); return; }
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSearchResults(data.filter((r: any) => r.gid !== profile?.currentId && !contacts.has(r.gid)));
+      }
+    } catch {}
+  };
+
+  const addFromSearch = async (r: any) => {
+    try {
+      const res = await fetch(`/api/profile/${r.gid}`);
+      if (res.ok) {
+        const p = await res.json();
+        store.addContact(r.gid, { displayName: p.name || r.name, currentId: r.gid, publicKey: '', lastSeen: Date.now(), description: p.description });
+      } else {
+        store.addContact(r.gid, { displayName: r.name, currentId: r.gid, publicKey: '', lastSeen: Date.now() });
+      }
+    } catch {
+      store.addContact(r.gid, { displayName: r.name, currentId: r.gid, publicKey: '', lastSeen: Date.now() });
+    }
+    setSearchQ(''); setSearchResults([]); setShowSearch(false);
+    setSelectedChat(r.gid);
+  };
 
   // Profile edit state (lifted out of render to avoid recreating)
   const [editName, setEditName] = useState('');
@@ -349,35 +380,57 @@ function App() {
 
       <div style={{ width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border)', height: '100%' }}>
         <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', letterSpacing: '0.15em' }}>LLB</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', letterSpacing: '0.12em' }}>LLB</span>
             {isOwner && <svg width="14" height="14" viewBox="0 0 24 24" fill="#3b82f6"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>}
+            <span style={{ fontSize: 10, color: 'var(--text3)', marginLeft: 4 }}>{t('llbFull')}</span>
           </div>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
             <button onClick={openProfile} style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               {profile.avatar ? <img src={profile.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <IconUser size={16} />}
             </button>
-            <button onClick={() => setShowSettings(true)} style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <button onClick={() => setShowSearch(v => !v)} style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconSearch size={15} />
+            </button>
+            <button className="gear-btn" onClick={() => setShowSettings(true)} style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <IconSettings size={16} />
             </button>
           </div>
         </div>
-        <div style={{ fontSize: 10, color: 'var(--text3)', padding: '4px 16px', borderBottom: '1px solid var(--border)' }}>{t('llbFull')}</div>
+
+        {/* Search dropdown */}
+        {showSearch && (
+          <div className="search-dropdown" style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg)' }}>
+            <input type="text" value={searchQ} onChange={e => doSearch(e.target.value)}
+              placeholder={settingsStore.get().lang === 'ru' ? 'Найти пользователя...' : 'Find user...'}
+              autoFocus
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text)', fontSize: 13, outline: 'none' }} />
+            {searchResults.length > 0 && (
+              <div style={{ marginTop: 8 }}>
+                {searchResults.map(r => (
+                  <button key={r.gid} onClick={() => addFromSearch(r)} style={{
+                    width: '100%', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', marginBottom: 4,
+                    background: 'var(--bg2)', borderRadius: 8, cursor: 'pointer', border: '1px solid var(--border)', color: 'var(--text)'
+                  }}>
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--bg3)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text2)', flexShrink: 0 }}>
+                      <IconUser size={14} />
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{ fontSize: 13, fontWeight: 500 }}>{r.name}</span>
+                        {r.isOwner && <svg width="10" height="10" viewBox="0 0 24 24" fill="#3b82f6"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>}
+                      </div>
+                      <div style={{ fontSize: 10, color: 'var(--text3)' }}>@{r.username}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <ChatList contacts={contacts} selectedChat={selectedChat} onSelectChat={handleSelectChat}
-          onAddContact={async (id) => {
-            try {
-              const res = await fetch(`/api/profile/${id}`);
-              if (res.ok) {
-                const p = await res.json();
-                store.addContact(id, { displayName: p.name || id, currentId: id, publicKey: '', lastSeen: Date.now(), description: p.description });
-              } else {
-                store.addContact(id, { displayName: id, currentId: id, publicKey: '', lastSeen: Date.now() });
-              }
-            } catch {
-              store.addContact(id, { displayName: id, currentId: id, publicKey: '', lastSeen: Date.now() });
-            }
-          }}
-          myId={profile.currentId} onPanic={() => { triggerPanic(); panicDestroy(); window.location.reload(); }}
+          onPanic={() => { triggerPanic(); panicDestroy(); window.location.reload(); }}
           msgCounts={getMessageCount} onContextMenu={handleContextMenu} />
       </div>
 
