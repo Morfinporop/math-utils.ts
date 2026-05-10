@@ -84,7 +84,7 @@ _f.post('/api/login', async (req, reply) => {
 _f.get('/api/profile/:gid', async (req, reply) => {
   const u = findUserByGid(req.params.gid);
   if (!u) return reply.status(404).send({ error: 'not_found' });
-  return { name: u.name, username: u.username, description: u.description, avatar: u.avatar, banner: u.banner, isOwner: u.isOwner };
+  return { name: u.name, username: u.username, description: u.description, avatar: u.avatar || '', banner: u.banner || '', isOwner: u.isOwner || false };
 });
 
 // ── SEARCH API ───────────────────────
@@ -136,8 +136,12 @@ _f.register(async (i) => {
           s.send(JSON.stringify({ op: 0x4, gid: id }));
           // Send saved contacts + messages
           s.send(JSON.stringify({ op: 'LOAD_DATA', contacts: db.contacts[id] || {}, messages: db.messages[id] || {} }));
-          // Notify others
-          SESSIONS.forEach((sock, sid) => { if (sock.readyState === 1) sock.send(JSON.stringify({ op: 'STATUS', gid: id, status: 'online' })); });
+          // Send current online statuses to new user
+          SESSIONS.forEach((sock, sid) => {
+            if (sid !== id) s.send(JSON.stringify({ op: 'STATUS', gid: sid, status: 'online' }));
+          });
+          // Notify ALL others that this user is online
+          SESSIONS.forEach((sock, sid) => { if (sid !== id && sock.readyState === 1) sock.send(JSON.stringify({ op: 'STATUS', gid: id, status: 'online' })); });
         }
 
         // ADMIN

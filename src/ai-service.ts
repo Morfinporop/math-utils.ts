@@ -5,8 +5,7 @@ const MODELS = [
   'meta-llama/llama-4-maverick:free',
   'nvidia/nemotron-3-nano-30b-a3b:free',
   'mistralai/mistral-small-3.1-24b-instruct:free',
-  'qwen/qwen3-coder:free',
-  'qwen/qwen3-next-80b-a3b-instruct:free'
+  'qwen/qwen3-coder:free'
 ];
 
 const getKey = (): string => {
@@ -16,7 +15,6 @@ const getKey = (): string => {
 };
 
 const BAD = /насилие|убийство|torture|gore|rape|murder|наркотик|жестокость|животн/i;
-
 const chatHistory: { role: string; content: string }[] = [];
 
 export function clearAIHistory() { chatHistory.length = 0; }
@@ -30,33 +28,11 @@ export async function askAnoAI(
   if (BAD.test(prompt)) { onResult(thinkingId, "[blocked]"); return; }
 
   chatHistory.push({ role: 'user', content: prompt });
-  if (chatHistory.length > 30) chatHistory.splice(0, chatHistory.length - 30);
+  if (chatHistory.length > 20) chatHistory.splice(0, chatHistory.length - 20);
 
   const key = getKey();
   const messages = [
-    { role: 'system', content: `You are AnoAI — a friendly AI assistant built into the LLB messenger.
-
-About LLB:
-- LLB = Личная Локальная Безопасность (Local Personal Security)
-- It's an encrypted anonymous messenger
-- Uses E2E encryption AES-256-GCM + ECDH P-384
-- Messages are stored only in RAM, auto-deleted after 10 hours
-- User IDs rotate every 24 hours
-- Voice messages are morphed with DSP for anonymity
-- To find users, click the search icon and type their @username
-- Profile: click your avatar in the top bar to edit name, bio, avatar, banner
-- Settings: click the gear icon for language and voice presets
-- ESC held 1.5 sec = panic mode (wipes everything)
-- Admin access: Ctrl+Alt+A (owner only)
-
-Rules:
-- Always answer in the SAME language the user writes in
-- Be natural and conversational, like texting a friend
-- Remember ALL previous messages and reference them naturally  
-- If user says "как дела" answer like "норм, а у тебя?" — be human-like
-- If user references something from earlier, use context
-- Be helpful, concise, never robotic
-- You can help users navigate the app and explain features` },
+    { role: 'system', content: 'You are AnoAI, a helpful assistant. Answer in the same language the user writes. Be concise and natural.' },
     ...chatHistory
   ];
 
@@ -65,15 +41,15 @@ Rules:
       try {
         const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json', 'HTTP-Referer': window.location.href, 'X-Title': 'LLB' },
-          body: JSON.stringify({ model, messages, max_tokens: 1024, temperature: 0.8 })
+          headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json', 'HTTP-Referer': window.location.href },
+          body: JSON.stringify({ model, messages, max_tokens: 512 })
         });
         if (!res.ok) continue;
         const data = await res.json();
         const text = data?.choices?.[0]?.message?.content;
         if (text) {
           chatHistory.push({ role: 'assistant', content: text });
-          if (chatHistory.length > 30) chatHistory.splice(0, chatHistory.length - 30);
+          if (chatHistory.length > 20) chatHistory.splice(0, chatHistory.length - 20);
           onResult(thinkingId, text);
           return;
         }
@@ -81,5 +57,5 @@ Rules:
       await new Promise(r => setTimeout(r, 500));
     }
   }
-  onResult(thinkingId, "Service unavailable.");
+  onResult(thinkingId, "Попробуйте ещё раз.");
 }

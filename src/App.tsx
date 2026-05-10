@@ -12,7 +12,7 @@ import { askAnoAI } from './ai-service';
 import { IconSettings, IconUser, IconSearch } from './icons';
 
 function App() {
-  const { profile, contacts, getMessages, addMessage, removeContact, getMessageCount, isAdmin } = useStore();
+  const { profile, contacts, getMessages, addMessage, removeContact, getUnreadCount, isAdmin } = useStore();
   const [screen, setScreen] = useState<'login' | 'chat'>('login');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
@@ -90,7 +90,7 @@ function App() {
 
   // Auth is now handled by doAuth()
 
-  const handleLogout = () => { panicDestroy(); setScreen('login'); setName(''); setPassword(''); setAdminMode(false); };
+  const handleLogout = () => { try { localStorage.removeItem('llb_auth'); } catch {} panicDestroy(); setScreen('login'); setName(''); setPassword(''); setEmail(''); setAdminMode(false); };
 
   const openProfile = () => {
     if (!profile) return;
@@ -152,9 +152,30 @@ function App() {
   };
 
   const [authMode, setAuthMode] = useState<'register' | 'login'>('register');
-  const [authStep, setAuthStep] = useState(0); // 0: name, 1: email+pass
+  const [authStep, setAuthStep] = useState(0);
   const [email, setEmail] = useState('');
   const [authError, setAuthError] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+
+  // Auto-login if remembered
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('llb_auth');
+      if (saved) {
+        const { email: e, password: p } = JSON.parse(saved);
+        fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: e, password: p }) })
+          .then(r => r.json())
+          .then(data => {
+            if (data.ok) {
+              store.setProfile({ seed: data.seed, currentId: data.gid, displayName: data.name, username: data.username, publicKeyJwk: '', privateKey: null, publicKey: null, isOwner: data.isOwner, description: data.description, avatar: data.avatar, banner: data.banner });
+              initNetwork(data.seed, data.name);
+              if (data.isOwner) setTimeout(() => authAdmin(), 1500);
+              setScreen('chat');
+            }
+          }).catch(() => {});
+      }
+    } catch {}
+  }, []);
 
   const doAuth = async () => {
     if (!email.trim() || !password.trim() || (authMode === 'register' && !name.trim())) return;
@@ -168,6 +189,7 @@ function App() {
       store.setProfile({ seed: data.seed, currentId: data.gid, displayName: data.name, username: data.username, publicKeyJwk: '', privateKey: null, publicKey: null, isOwner: data.isOwner, description: data.description, avatar: data.avatar, banner: data.banner });
       initNetwork(data.seed, data.name);
       if (data.isOwner) setTimeout(() => authAdmin(), 1500);
+      if (rememberMe) { try { localStorage.setItem('llb_auth', JSON.stringify({ email, password })); } catch {} }
       setScreen('chat');
     } catch { setAuthError('Connection error'); }
   };
@@ -247,6 +269,11 @@ function App() {
               )}
 
               {authError && <div style={{ color: '#ff4444', fontSize: 12, textAlign: 'center' }}>{authError}</div>}
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} style={{ width: 16, height: 16 }} />
+                <span style={{ fontSize: 12, color: '#888' }}>{settingsStore.get().lang === 'ru' ? 'Запомнить меня' : 'Remember me'}</span>
+              </label>
 
               <div style={{ display: 'flex', gap: 10 }}>
                 {regStep2 && (
@@ -336,11 +363,16 @@ function App() {
       {[
         { label: t('profile'), action: () => { openUserProfile(contextMenu.id); } },
         { label: t('clearChat'), action: () => { store.clearMessages(contextMenu.id); sendClearChat(contextMenu.id); } },
-        { label: store.getContact(contextMenu.id)?.blocked 
-          ? (settingsStore.get().lang === 'ru' ? 'Разблокировать' : 'Unblock') 
-          : (settingsStore.get().lang === 'ru' ? 'Заблокировать' : 'Block'),
-          action: () => { const c = store.getContact(contextMenu.id); if (c?.blocked) { store.unblockContact(contextMenu.id); sendUnblock(contextMenu.id); } else { store.blockContact(contextMenu.id); sendBlock(contextMenu.id); } }
-        },
+        ...(store.getContact(contextMenu.id)?.blockedByThem ? [] : [{
+          label: store.getContact(contextMenu.id)?.blockedByMe
+            ? (settingsStore.get().lang === 'ru' ? 'Разблокировать' : 'Unblock')
+            : (settingsStore.get().lang === 'ru' ? 'Заблокировать' : 'Block'),
+          action: () => { 
+            const c = store.getContact(contextMenu.id); 
+            if (c?.blockedByMe) { store.unblockContact(contextMenu.id); sendUnblock(contextMenu.id); } 
+            else { store.blockContact(contextMenu.id); sendBlock(contextMenu.id); } 
+          }
+        }]),
         { label: t('deleteChat'), action: () => { sendDeleteChat(contextMenu.id); removeContact(contextMenu.id); if (selectedChat === contextMenu.id) setSelectedChat(null); }, danger: true },
       ].map((item, i) => (
         <button key={i} onClick={() => { item.action(); setContextMenu(null); }}
@@ -487,7 +519,7 @@ function App() {
 
         <ChatList contacts={contacts} selectedChat={selectedChat} onSelectChat={handleSelectChat}
           onPanic={() => { triggerPanic(); panicDestroy(); window.location.reload(); }}
-          msgCounts={getMessageCount} onContextMenu={handleContextMenu} />
+          msgCounts={getUnreadCount} onContextMenu={handleContextMenu} />
       </div>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>

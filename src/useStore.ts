@@ -17,7 +17,7 @@ export function useStore() {
     addContact: useCallback((id: string, c: Contact) => store.addContact(id, c), []),
     removeContact: useCallback((id: string) => store.removeContact(id), []),
     getLastMessage: useCallback((id: string) => store.getLastMessage(id), []),
-    getMessageCount: useCallback((id: string) => store.getMessageCount(id), []),
+    getUnreadCount: useCallback((id: string) => store.getUnreadCount(id), []),
     isAdmin: store.isAdmin(),
   };
 }

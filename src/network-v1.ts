@@ -52,8 +52,8 @@ export function initNetwork(s: string, alias: string) {
         }
       }
 
-      if (x.op === 'BLOCKED_BY') store.updateContact(x.from, { blocked: true });
-      if (x.op === 'UNBLOCKED_BY') store.updateContact(x.from, { blocked: false });
+      if (x.op === 'BLOCKED_BY') store.updateContact(x.from, { blockedByThem: true });
+      if (x.op === 'UNBLOCKED_BY') store.updateContact(x.from, { blockedByThem: false });
       if (x.op === 'CLEAR_CHAT') store.clearMessages(x.from);
       if (x.op === 'DELETE_CHAT') { store.clearMessages(x.from); store.removeContact(x.from); }
       

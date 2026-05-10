@@ -32,9 +32,9 @@ export function ChatList({ contacts, selectedChat, onSelectChat, msgCounts, onCo
                 <span style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.displayName}</span>
                 {(id === 'AnoAI_bot' || c.displayName === 'LLB') && <svg width="12" height="12" viewBox="0 0 24 24" fill="#3b82f6"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>}
               </div>
-              {id !== 'AnoAI_bot' && <div style={{ fontSize: 10, color: c.blocked ? 'var(--danger)' : c.online ? '#4caf50' : 'var(--text3)' }}>
-                {c.blocked 
-                  ? (settingsStore.get().lang === 'ru' ? 'был давно' : 'last seen long ago')
+              {id !== 'AnoAI_bot' && <div style={{ fontSize: 10, color: (c.blockedByMe || c.blockedByThem) ? 'var(--danger)' : c.online ? '#4caf50' : 'var(--text3)' }}>
+                {(c.blockedByMe || c.blockedByThem) 
+                  ? (settingsStore.get().lang === 'ru' ? 'заблокирован' : 'blocked')
                   : c.online 
                     ? (settingsStore.get().lang === 'ru' ? 'в сети' : 'online')
                     : c.lastOnlineTime 

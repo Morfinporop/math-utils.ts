@@ -28,7 +28,7 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
   const timerRef = useRef<any>(null);
   const t = (key: any) => settingsStore.t(key);
   const isBot = contactId === 'AnoAI_bot';
-  const blocked = contact.blocked;
+  const blocked = contact.blockedByMe || contact.blockedByThem;
   const [showContactProfile, setShowContactProfile] = useState(false);
   const hasVerified = contactId === 'AnoAI_bot' || contact.displayName === 'LLB';
 
@@ -60,7 +60,7 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
             </div>
             {!isBot && <div style={{ fontSize: 10, color: blocked ? 'var(--danger)' : contact.online ? '#4caf50' : 'var(--text3)' }}>
               {blocked 
-                ? (settingsStore.get().lang === 'ru' ? 'был давно' : 'last seen long ago')
+                ? (settingsStore.get().lang === 'ru' ? 'заблокирован' : 'blocked')
                 : contact.online 
                   ? (settingsStore.get().lang === 'ru' ? 'в сети' : 'online')
                   : contact.lastOnlineTime 
