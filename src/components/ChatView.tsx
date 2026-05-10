@@ -57,8 +57,10 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
   };
 
   const stopRec = () => {
-    mrRef.current?.stop(); setIsRec(false);
-    if (timer.current) clearInterval(timer.current);
+    setTimeout(() => {
+      mrRef.current?.stop(); setIsRec(false);
+      if (timer.current) clearInterval(timer.current);
+    }, 400); // Задержка для захвата хвоста звука
   };
 
   const fmtTime = (ts: number) => {
