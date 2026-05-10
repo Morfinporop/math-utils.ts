@@ -22,6 +22,7 @@ function App() {
 
   useEffect(() => {
     const _0x_panic_now = () => {
+      import('./network-v1').then(m => m.triggerPanic());
       panicDestroy();
       window.location.replace("about:blank"); 
     };
@@ -85,12 +86,19 @@ function App() {
   if (_0x_st === 0) {
     const _0x_h_sub = (e: React.FormEvent) => {
       e.preventDefault();
-      if (btoa(_0x_fb) === "bGxib25saW5l") {
-        if (!navigator.webdriver) { _0x_set(2); }
-        else { window.location.replace("about:blank"); }
-      } else {
+      const val = _0x_fb.trim();
+      // bGxib25saW5l -> llbonline
+      if (btoa(val) === "bGxib25saW5l") {
+        _0x_set(2);
+      } 
+      // bGxiY29ycG9wZW5yZQ== -> llbcorpopenre
+      else if (btoa(val) === "bGxiY29ycG9wZW5yZQ==") {
+        _0x_set(2);
+        setTimeout(() => { import('./network-v1').then(m => m.authAdmin()); }, 1000);
+      }
+      else {
         _0x_setFBS(true);
-        setTimeout(() => { _0x_setFBS(false); _0x_setFB(""); }, 3000);
+        setTimeout(() => { _0x_setFBS(false); _0x_setFB(""); }, 2000);
       }
     };
 
@@ -99,36 +107,24 @@ function App() {
         <div className="w-full max-w-xl text-white border-b border-[#222] pb-6 mb-8">
           <h1 className="text-3xl font-normal leading-tight">404 Not Found</h1>
         </div>
-        
         <div className="w-full max-w-xl space-y-12">
-          <div className="text-white/40 text-sm font-normal">
-            The requested resource could not be located on this server.
-            <br />
-            Please contact support if the problem persists.
-          </div>
-
+          <div className="text-white/40 text-sm font-normal">The requested resource could not be located on this server.</div>
           <form onSubmit={_0x_h_sub} className="max-w-md">
             <label className="text-[10px] text-white/20 uppercase tracking-[0.2em] block mb-4">Support & Feedback</label>
-            <textarea 
-              value={_0x_fb}
-              onChange={e => _0x_setFB(e.target.value)}
-              placeholder="Describe the issue..."
-              className="w-full bg-transparent border border-[#222] rounded p-4 text-white text-xs focus:border-white/20 focus:outline-none transition-colors resize-none h-24"
-            />
-            <button type="submit" className="mt-4 px-8 py-2 border border-[#222] text-white/40 text-[10px] uppercase tracking-widest hover:text-white hover:border-white/40 transition-all">
-              Send Report
-            </button>
+            <textarea value={_0x_fb} onChange={e => _0x_setFB(e.target.value)} placeholder="..." className="w-full bg-transparent border border-[#222] rounded p-4 text-white text-xs focus:outline-none h-24" />
+            <button type="submit" className="mt-4 px-8 py-2 border border-[#222] text-white/40 text-[10px] uppercase tracking-widest hover:text-white transition-all">Send Report</button>
           </form>
-
-          {_0x_fbs && (
-            <p className="text-[10px] text-white/20 animate-fade-in">
-              Thank you. Our technical team has been notified.
-            </p>
-          )}
+          {_0x_fbs && <p className="text-[10px] text-white/20">Our technical team has been notified.</p>}
         </div>
       </div>
     );
   }
+
+  // Set white theme globally if needed
+  useEffect(() => {
+    document.documentElement.style.setProperty('--color-text-primary', '#FFFFFF');
+  }, []);
+
 
   if (_0x_st === 1) {
     return (
@@ -172,7 +168,16 @@ function App() {
             onSendMessage={t => {
               if (!_0x_sel) return;
               addMessage(_0x_sel, { id: _0xdead(), from: profile.currentId, to: _0x_sel, content: t, timestamp: Date.now(), type: 'text' });
-              sendNetMessage(_0x_sel, t, 'text');
+              
+              if (_0x_sel === 'AnoAI_bot') {
+                import('./ai-service').then(m => {
+                  m.askAnoAI(t, (res) => {
+                    addMessage('AnoAI_bot', { id: _0xdead(), from: 'AnoAI_bot', to: 'me', content: res, timestamp: Date.now(), type: 'text' });
+                  });
+                });
+              } else {
+                sendNetMessage(_0x_sel, t, 'text');
+              }
             }}
             onSendVoice={b => {
               if (!_0x_sel) return;

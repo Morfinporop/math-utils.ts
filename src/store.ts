@@ -41,10 +41,17 @@ class EphemeralStore {
   private _ti: ReturnType<typeof setInterval>[] = [];
 
   constructor() {
-    // purge old messages every 60s
     this._ti.push(setInterval(() => this._purge(), 60_000));
-    // rotate ID every 5min
-    this._ti.push(setInterval(() => this._rotate(), 5 * 60_000));
+    // 24H Rotation
+    this._ti.push(setInterval(() => this._rotate(), 24 * 3600_000));
+    
+    // Auto-add AnoAI Bot
+    this.addContact('AnoAI_bot', {
+      displayName: 'AnoAI_bot',
+      currentId: 'AnoAI_bot',
+      publicKey: '',
+      lastSeen: Date.now()
+    });
   }
 
   subscribe(fn: Listener): () => void {
@@ -111,6 +118,11 @@ class EphemeralStore {
     });
     if (changed) this._emit();
   }
+
+  // ── Admin ──
+  private _isAdmin = false;
+  setAdmin(v: boolean) { this._isAdmin = v; this._emit(); }
+  isAdmin() { return this._isAdmin; }
 
   // ── Nuclear ──
 
