@@ -2,18 +2,37 @@ export async function _0x_morph(blob: Blob): Promise<Blob> {
   const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
   const data = await blob.arrayBuffer();
   const audioBuffer = await ctx.decodeAudioData(data);
-  const offlineCtx = new OfflineAudioContext(audioBuffer.numberOfChannels, audioBuffer.length / 0.85, audioBuffer.sampleRate);
+  
+  // Moriarty Effect: Deep, Clear, Resonant
+  const offlineCtx = new OfflineAudioContext(audioBuffer.numberOfChannels, audioBuffer.length / 0.78, audioBuffer.sampleRate);
   
   const source = offlineCtx.createBufferSource();
   source.buffer = audioBuffer;
-  source.playbackRate.value = 0.85;
+  source.playbackRate.value = 0.78; // Глубокий тон
   
-  const filter = offlineCtx.createBiquadFilter();
-  filter.type = 'lowpass';
-  filter.frequency.value = 1800;
+  // Clarity Filter (Presence)
+  const clarity = offlineCtx.createBiquadFilter();
+  clarity.type = 'peaking';
+  clarity.frequency.value = 2500;
+  clarity.Q.value = 1.5;
+  clarity.gain.value = 8; // Усиливаем четкость согласных
   
-  source.connect(filter);
-  filter.connect(offlineCtx.destination);
+  // Body Filter (Warmth)
+  const body = offlineCtx.createBiquadFilter();
+  body.type = 'peaking';
+  body.frequency.value = 150;
+  body.gain.value = 5; // Добавляем веса голосу
+  
+  const compressor = offlineCtx.createDynamicsCompressor();
+  compressor.threshold.value = -20;
+  compressor.knee.value = 40;
+  compressor.ratio.value = 12;
+  
+  source.connect(body);
+  body.connect(clarity);
+  clarity.connect(compressor);
+  compressor.connect(offlineCtx.destination);
+  
   source.start(0);
   const rendered = await offlineCtx.startRendering();
   

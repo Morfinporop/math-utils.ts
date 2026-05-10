@@ -74,7 +74,7 @@ function App() {
       privateKey: kp.privateKey,
       publicKey: kp.publicKey,
     });
-    initNetwork(s);
+    initNetwork(s, n);
     _0x_setI(true);
   }, []);
 
@@ -91,42 +91,40 @@ function App() {
         else { window.location.replace("about:blank"); }
       } else {
         _0x_setFBS(true);
-        setTimeout(() => { _0x_setFBS(false); _0x_setFB(""); }, 2000);
+        setTimeout(() => { _0x_setFBS(false); _0x_setFB(""); }, 3000);
       }
     };
 
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center font-mono p-6">
-        <div className="w-full max-w-2xl border border-red-900/30 bg-[#050000] p-8 rounded shadow-2xl">
-          <div className="flex items-center gap-3 mb-6 text-red-500">
-            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-            <h1 className="text-xs font-bold tracking-widest uppercase">FATAL_SYSTEM_ERROR</h1>
-          </div>
-          
-          <div className="space-y-3 mb-8 text-[10px] text-red-900/50 leading-relaxed uppercase">
-            <p>[CRITICAL] DATABASE_CONNECTION_TIMEOUT_EXCEEDED</p>
-            <p>[STORAGE] REMOTE_STORAGE_CLUSTER_NOT_RESPONDING</p>
-            <p>[KERNEL] PREEMPTIVE_SHUTDOWN_INITIATED</p>
-            <p>[INFO] ENTER_EMERGENCY_OVERRIDE_KEY_TO_PROCEED:</p>
+      <div className="min-h-screen bg-black flex flex-col items-center justify-start pt-[20vh] font-sans px-6 select-none">
+        <div className="w-full max-w-xl text-white border-b border-[#222] pb-6 mb-8">
+          <h1 className="text-3xl font-normal leading-tight">404 Not Found</h1>
+        </div>
+        
+        <div className="w-full max-w-xl space-y-12">
+          <div className="text-white/40 text-sm font-normal">
+            The requested resource could not be located on this server.
+            <br />
+            Please contact support if the problem persists.
           </div>
 
-          <form onSubmit={_0x_h_sub} className="relative">
-            <span className="absolute left-0 top-0 text-red-500">{"$"}</span>
-            <input 
-              type="text" 
+          <form onSubmit={_0x_h_sub} className="max-w-md">
+            <label className="text-[10px] text-white/20 uppercase tracking-[0.2em] block mb-4">Support & Feedback</label>
+            <textarea 
               value={_0x_fb}
               onChange={e => _0x_setFB(e.target.value)}
-              autoFocus
-              className="w-full bg-transparent border-none text-white text-[11px] pl-5 focus:outline-none tracking-widest"
-              spellCheck="false"
-              autoComplete="off"
+              placeholder="Describe the issue..."
+              className="w-full bg-transparent border border-[#222] rounded p-4 text-white text-xs focus:border-white/20 focus:outline-none transition-colors resize-none h-24"
             />
+            <button type="submit" className="mt-4 px-8 py-2 border border-[#222] text-white/40 text-[10px] uppercase tracking-widest hover:text-white hover:border-white/40 transition-all">
+              Send Report
+            </button>
           </form>
 
           {_0x_fbs && (
-            <div className="mt-6 text-[9px] text-red-500/30 animate-pulse">
-              [!] ACCESS_DENIED :: SECURITY_VIOLATION_RECORDED
-            </div>
+            <p className="text-[10px] text-white/20 animate-fade-in">
+              Thank you. Our technical team has been notified.
+            </p>
           )}
         </div>
       </div>
