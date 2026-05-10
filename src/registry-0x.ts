@@ -3,35 +3,34 @@ export async function _0x_morph(blob: Blob): Promise<Blob> {
   const data = await blob.arrayBuffer();
   const audioBuffer = await ctx.decodeAudioData(data);
   
-  // Moriarty Effect: Deep, Clear, Resonant
-  const offlineCtx = new OfflineAudioContext(audioBuffer.numberOfChannels, audioBuffer.length / 0.78, audioBuffer.sampleRate);
+  // Moriarty v2: Deep Authority
+  const offlineCtx = new OfflineAudioContext(audioBuffer.numberOfChannels, audioBuffer.length / 0.75, audioBuffer.sampleRate);
   
   const source = offlineCtx.createBufferSource();
   source.buffer = audioBuffer;
-  source.playbackRate.value = 0.78; // Глубокий тон
+  source.playbackRate.value = 0.75; // Мощный бас
   
-  // Clarity Filter (Presence)
+  // Предусилитель для четкости речи
   const clarity = offlineCtx.createBiquadFilter();
   clarity.type = 'peaking';
-  clarity.frequency.value = 2500;
-  clarity.Q.value = 1.5;
-  clarity.gain.value = 8; // Усиливаем четкость согласных
+  clarity.frequency.value = 2800; // Частота разборчивости
+  clarity.gain.value = 12;
+  clarity.Q.value = 2;
+
+  // Саб-бас для веса
+  const sub = offlineCtx.createBiquadFilter();
+  sub.type = 'lowshelf';
+  sub.frequency.value = 200;
+  sub.gain.value = 8;
   
-  // Body Filter (Warmth)
-  const body = offlineCtx.createBiquadFilter();
-  body.type = 'peaking';
-  body.frequency.value = 150;
-  body.gain.value = 5; // Добавляем веса голосу
+  const comp = offlineCtx.createDynamicsCompressor();
+  comp.threshold.value = -15;
+  comp.ratio.value = 8;
   
-  const compressor = offlineCtx.createDynamicsCompressor();
-  compressor.threshold.value = -20;
-  compressor.knee.value = 40;
-  compressor.ratio.value = 12;
-  
-  source.connect(body);
-  body.connect(clarity);
-  clarity.connect(compressor);
-  compressor.connect(offlineCtx.destination);
+  source.connect(sub);
+  sub.connect(clarity);
+  clarity.connect(comp);
+  comp.connect(offlineCtx.destination);
   
   source.start(0);
   const rendered = await offlineCtx.startRendering();
@@ -55,15 +54,17 @@ export async function _0x_gen() { return crypto.subtle.generateKey({ name: 'ECDH
 export async function _0x_exp(k: any) { return btoa(JSON.stringify(await crypto.subtle.exportKey('jwk', k))); }
 export async function _0x_imp(s: string) { return crypto.subtle.importKey('jwk', JSON.parse(atob(s)), { name: 'ECDH', namedCurve: 'P-384' }, true, []); }
 export async function _0x_crypt(k: any, p: string, enc = true) {
+  const encod = new TextEncoder();
+  const decod = new TextDecoder();
   if (enc) {
     const iv = crypto.getRandomValues(new Uint8Array(12));
-    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, k, new TextEncoder().encode(p));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, k, encod.encode(p));
     const b = new Uint8Array(iv.length + new Uint8Array(ct).length);
     b.set(iv); b.set(new Uint8Array(ct), iv.length);
     return btoa(String.fromCharCode(...b));
   } else {
     const raw = Uint8Array.from(atob(p), c => c.charCodeAt(0));
     const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: raw.slice(0, 12) }, k, raw.slice(12));
-    return new TextDecoder().decode(pt);
+    return decod.decode(pt);
   }
 }

@@ -64,11 +64,10 @@ function App() {
     const kp = await _0xfa7(null);
     const pub = await _0xeb2(kp.publicKey);
     const s = _0xdead();
-    const cid = await _0xhash(s);
 
     store.setProfile({
       seed: s,
-      currentId: cid,
+      currentId: "SYNCING...",
       displayName: n,
       publicKeyJwk: pub,
       privateKey: kp.privateKey,
