@@ -17,14 +17,14 @@ export function WelcomeScreen({ onStart }: Props) {
 
         {/* Logo */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl border border-border bg-abyss mb-5">
-            <IconShield size={28} className="text-text-secondary" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl border border-white bg-black mb-5">
+            <IconShield size={28} className="text-white" />
           </div>
-          <h1 className="text-xl font-bold text-text-primary tracking-[0.3em] uppercase">
+          <h1 className="text-2xl font-bold text-white tracking-[0.4em] uppercase">
             LLB
           </h1>
-          <p className="text-text-muted text-xs mt-2 tracking-wider">
-            Personal Local Security
+          <p className="text-white text-[10px] mt-2 tracking-widest opacity-80">
+            PERSONAL LOCAL SECURITY
           </p>
         </div>
 

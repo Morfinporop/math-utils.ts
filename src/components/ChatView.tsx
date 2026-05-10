@@ -128,8 +128,13 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
                   {msg.type === 'voice' ? (
                     <div className="flex items-center gap-2">
                       <IconWaveform size={14} className="text-text-muted flex-shrink-0" />
-                      <audio controls className="h-7 max-w-[180px] opacity-60" style={{ filter: 'grayscale(1) brightness(0.7)' }}>
-                        <source src={msg.content} type="audio/webm" />
+                      <audio 
+                        controls 
+                        className="h-7 max-w-[180px] opacity-80" 
+                        style={{ filter: 'invert(1) contrast(200%)' }}
+                        onPlay={(e) => { e.currentTarget.playbackRate = 0.85; }}
+                      >
+                        <source src={msg.content} />
                       </audio>
                     </div>
                   ) : (

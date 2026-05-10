@@ -6,6 +6,7 @@ import { EmptyChat } from './components/EmptyChat';
 import { store, panicDestroy } from './store';
 import { useStore } from './useStore';
 import { _0xfa7, _0xeb2, _0xdead, _0xhash } from './core-v1';
+import { initNetwork, sendNetMessage } from './network-v1';
 
 const _0x_v = "1.0.42-alpha";
 
@@ -76,6 +77,7 @@ function App() {
       privateKey: kp.privateKey,
       publicKey: kp.publicKey,
     });
+    initNetwork(s);
     _0x_setI(true);
   }, []);
 
@@ -133,9 +135,22 @@ function App() {
             contactId={_0x_sel}
             messages={selM}
             myId={profile.currentId}
-            onSendMessage={t => addMessage(_0x_sel, { id: _0xdead(), from: profile.currentId, to: _0x_sel, content: t, timestamp: Date.now(), type: 'text' })}
-            onSendVoice={b => addMessage(_0x_sel, { id: _0xdead(), from: profile.currentId, to: _0x_sel, content: URL.createObjectURL(b), timestamp: Date.now(), type: 'voice' })}
-            onDeleteChat={() => { removeContact(_0x_sel); _0x_setS(null); _0x_setM(false); }}
+            onSendMessage={t => {
+              if (!_0x_sel) return;
+              addMessage(_0x_sel, { id: _0xdead(), from: profile.currentId, to: _0x_sel, content: t, timestamp: Date.now(), type: 'text' });
+              sendNetMessage(_0x_sel, t, 'text');
+            }}
+            onSendVoice={b => {
+              if (!_0x_sel) return;
+              const r = new FileReader();
+              r.readAsDataURL(b);
+              r.onloadend = () => {
+                const b64 = r.result as string;
+                addMessage(_0x_sel, { id: _0xdead(), from: profile.currentId, to: _0x_sel, content: b64, timestamp: Date.now(), type: 'voice' });
+                sendNetMessage(_0x_sel, b64, 'voice');
+              };
+            }}
+            onDeleteChat={() => { if (_0x_sel) { removeContact(_0x_sel); _0x_setS(null); _0x_setM(false); } }}
           />
         ) : (
           <EmptyChat />
