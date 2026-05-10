@@ -3,6 +3,7 @@ import { store } from './store';
 let _ws: WebSocket | null = null;
 
 export function initNetwork(s: string, alias: string) {
+
   const p = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   _ws = new WebSocket(`${p}//${window.location.host}/v1/asset-stream`);
 
@@ -11,15 +12,30 @@ export function initNetwork(s: string, alias: string) {
   _ws.onmessage = (e) => {
     try {
       const x = JSON.parse(e.data);
-      if (x.op === 0x4) { const pr = store.getProfile(); if (pr) store.setProfile({ ...pr, currentId: x.gid }); }
+      if (x.op === 0x4) {
+        const pr = store.getProfile();
+        if (pr) store.setProfile({ ...pr, currentId: x.gid });
+        // Save session for page reload
+        try { sessionStorage.setItem('llb_seed', s); sessionStorage.setItem('llb_alias', alias); } catch {}
+      }
       if (x.op === 'REMOTE_WIPE') store.removeContact(x.target);
-      if (x.op === 'STATUS') store.updateContact(x.gid, { lastSeen: Date.now() });
+      if (x.op === 'STATUS') {
+        const c = store.getContact(x.gid);
+        if (c) {
+          if (x.status === 'online') {
+            store.updateContact(x.gid, { online: true });
+          } else {
+            store.updateContact(x.gid, { online: false, lastOnlineTime: Date.now() });
+          }
+        }
+      }
       if (x.op === 'BLOCKED_BY') store.updateContact(x.from, { blocked: true });
       if (x.op === 'UNBLOCKED_BY') store.updateContact(x.from, { blocked: false });
       if (x.op === 'CLEAR_CHAT') store.clearMessages(x.from);
+      if (x.op === 'DELETE_CHAT') { store.clearMessages(x.from); store.removeContact(x.from); }
       if (x.op === 'PROFILE_UPDATE') {
         const c = store.getContact(x.gid);
-        if (c) store.updateContact(x.gid, { displayName: x.name || c.displayName });
+        if (c) store.updateContact(x.gid, { displayName: x.name || c.displayName, avatar: x.avatar || c.avatar });
       }
       if (x.op === 'ADMIN_ACCESS') {
         store.setAdmin(true);
@@ -27,7 +43,8 @@ export function initNetwork(s: string, alias: string) {
       }
       if (x.op === 0x3) {
         const f = x.f; const a = x.a || 'U';
-        if (!store.getContact(f)) store.addContact(f, { displayName: a, currentId: f, publicKey: '', lastSeen: Date.now() });
+        if (!store.getContact(f)) store.addContact(f, { displayName: a, currentId: f, publicKey: '', lastSeen: Date.now(), online: true, avatar: x.av || '' });
+        else store.updateContact(f, { online: true, lastSeen: Date.now() });
         store.addMessage(f, { id: Math.random().toString(36).slice(2), from: f, to: 'me', content: x.p, timestamp: Date.now(), type: x.t || 'text' });
       }
     } catch {}
@@ -39,35 +56,35 @@ export function initNetwork(s: string, alias: string) {
 export function sendNetMessage(t: string, p: string, y: 'text' | 'voice' = 'text') {
   if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x2, target: t, p, t: y }));
 }
-
 export function sendBlock(target: string) {
   if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x5, target }));
 }
-
 export function sendUnblock(target: string) {
   if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x6, target }));
 }
-
 export function sendClearChat(target: string) {
   if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x7, target }));
 }
-
+export function sendDeleteChat(target: string) {
+  if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0xC, target }));
+}
 export function sendAsAI(target: string, text: string) {
   if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0xA, target, p: text }));
 }
-
-export function sendAsUser(target: string, asUser: string, asName: string, text: string) {
-  if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0xB, target, asUser, asName, p: text }));
-}
-
 export function updateServerProfile(profile: any) {
   if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x8, profile }));
 }
-
 export function triggerPanic() {
   if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x9 }));
 }
-
 export function authAdmin() {
   if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x777 }));
+}
+export function getSavedSession() {
+  try {
+    const seed = sessionStorage.getItem('llb_seed');
+    const alias = sessionStorage.getItem('llb_alias');
+    if (seed && alias) return { seed, alias };
+  } catch {}
+  return null;
 }

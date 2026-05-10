@@ -50,13 +50,24 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg)' }}>
       <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <button onClick={() => { if (onViewProfile) onViewProfile(); else setShowContactProfile(!showContactProfile); }} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text)', padding: 0 }}>
-          <div style={av}>{isBot ? <IconRobot size={18} /> : <IconUser size={18} />}</div>
+          <div style={{ ...av, overflow: 'hidden' }}>
+            {isBot ? <IconRobot size={18} /> : contact.avatar ? <img src={contact.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <IconUser size={18} />}
+          </div>
           <div style={{ textAlign: 'left' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <span style={{ fontSize: 15, fontWeight: 600 }}>{contact.displayName}</span>
               {hasVerified && <svg width="14" height="14" viewBox="0 0 24 24" fill="#3b82f6"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>}
             </div>
-            {!isBot && <div style={{ fontSize: 10, color: blocked ? 'var(--danger)' : '#4caf50' }}>{blocked ? (settingsStore.get().lang === 'ru' ? 'был давно' : 'last seen long ago') : (settingsStore.get().lang === 'ru' ? 'в сети' : 'online')}</div>}
+            {!isBot && <div style={{ fontSize: 10, color: blocked ? 'var(--danger)' : contact.online ? '#4caf50' : 'var(--text3)' }}>
+              {blocked 
+                ? (settingsStore.get().lang === 'ru' ? 'был давно' : 'last seen long ago')
+                : contact.online 
+                  ? (settingsStore.get().lang === 'ru' ? 'в сети' : 'online')
+                  : contact.lastOnlineTime 
+                    ? `${settingsStore.get().lang === 'ru' ? 'был' : 'last seen'} ${new Date(contact.lastOnlineTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                    : (settingsStore.get().lang === 'ru' ? 'не в сети' : 'offline')
+              }
+            </div>}
           </div>
         </button>
         <button onClick={onDeleteChat} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px' }}>

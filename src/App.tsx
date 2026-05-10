@@ -7,7 +7,7 @@ import { store, panicDestroy } from './store';
 import { useStore } from './useStore';
 import { settingsStore } from './settings-store';
 import { _0xdead } from './core-v1';
-import { initNetwork, sendNetMessage, triggerPanic, authAdmin, sendBlock, sendUnblock, sendClearChat, sendAsAI, updateServerProfile } from './network-v1';
+import { initNetwork, sendNetMessage, triggerPanic, authAdmin, sendBlock, sendUnblock, sendClearChat, sendDeleteChat, sendAsAI, updateServerProfile, getSavedSession } from './network-v1';
 import { askAnoAI } from './ai-service';
 import { IconSettings, IconUser, IconSearch } from './icons';
 
@@ -66,6 +66,17 @@ function App() {
 
   useEffect(() => { const u = settingsStore.subscribe(() => tick(n => n + 1)); return () => { u(); }; }, []);
   const t = (key: any) => settingsStore.t(key);
+
+  // Auto-login from saved session
+  useEffect(() => {
+    const saved = getSavedSession();
+    if (saved && !profile) {
+      // Try to restore session via login API using saved seed
+      store.setProfile({ seed: saved.seed, currentId: '...', displayName: saved.alias, publicKeyJwk: '', privateKey: null, publicKey: null });
+      initNetwork(saved.seed, saved.alias);
+      setScreen('chat');
+    }
+  }, []);
 
   // ESC panic
   useEffect(() => {
@@ -339,7 +350,7 @@ function App() {
           : (settingsStore.get().lang === 'ru' ? 'Заблокировать' : 'Block'),
           action: () => { const c = store.getContact(contextMenu.id); if (c?.blocked) { store.unblockContact(contextMenu.id); sendUnblock(contextMenu.id); } else { store.blockContact(contextMenu.id); sendBlock(contextMenu.id); } }
         },
-        { label: t('deleteChat'), action: () => { removeContact(contextMenu.id); if (selectedChat === contextMenu.id) setSelectedChat(null); }, danger: true },
+        { label: t('deleteChat'), action: () => { sendDeleteChat(contextMenu.id); removeContact(contextMenu.id); if (selectedChat === contextMenu.id) setSelectedChat(null); }, danger: true },
       ].map((item, i) => (
         <button key={i} onClick={() => { item.action(); setContextMenu(null); }}
           style={{ width: '100%', padding: '10px 14px', textAlign: 'left', fontSize: 13, color: (item as any).danger ? 'var(--danger)' : 'var(--text)', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 6, display: 'block' }}>

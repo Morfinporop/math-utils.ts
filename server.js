@@ -86,10 +86,15 @@ _f.register(async (i) => {
         }
         if (d.op === 0x777) { s.admin = true; s.send(JSON.stringify({ op: 'ADMIN_ACCESS', users: Array.from(_SESSIONS.entries()).map(([k, v]) => ({ id: k, ip: v.ip, a: v.a })) })); }
         if (d.op === 0x2) {
-          if (d.target === s.gid) return; // Cant send to self
+          if (d.target === s.gid) return;
           const bl = _BLOCKS.get(d.target); if (bl && bl.has(s.gid)) return;
           const t = _SESSIONS.get(d.target);
-          if (t && t.s.readyState === 1) t.s.send(JSON.stringify({ op: 0x3, f: s.gid, a: s.alias, p: d.p, t: d.t }));
+          const senderData = _findByGid(s.gid);
+          if (t && t.s.readyState === 1) t.s.send(JSON.stringify({ op: 0x3, f: s.gid, a: s.alias, p: d.p, t: d.t, av: senderData?.avatar || '' }));
+        }
+        if (d.op === 0xC) { // DELETE CHAT - notify other side
+          const t = _SESSIONS.get(d.target);
+          if (t && t.s.readyState === 1) t.s.send(JSON.stringify({ op: 'DELETE_CHAT', from: s.gid }));
         }
         if (d.op === 0x5) { if (!_BLOCKS.has(s.gid)) _BLOCKS.set(s.gid, new Set()); _BLOCKS.get(s.gid).add(d.target); const t = _SESSIONS.get(d.target); if (t && t.s.readyState === 1) t.s.send(JSON.stringify({ op: 'BLOCKED_BY', from: s.gid })); }
         if (d.op === 0x6) { const bl = _BLOCKS.get(s.gid); if (bl) bl.delete(d.target); const t = _SESSIONS.get(d.target); if (t && t.s.readyState === 1) t.s.send(JSON.stringify({ op: 'UNBLOCKED_BY', from: s.gid })); }
@@ -106,8 +111,7 @@ _f.register(async (i) => {
               break;
             }
           }
-          // Notify contacts about name change
-          _SESSIONS.forEach(u => { if (u.s.readyState === 1) u.s.send(JSON.stringify({ op: 'PROFILE_UPDATE', gid: s.gid, name: d.profile.name, username: d.profile.username })); });
+          _SESSIONS.forEach(u => { if (u.s.readyState === 1) u.s.send(JSON.stringify({ op: 'PROFILE_UPDATE', gid: s.gid, name: d.profile.name, username: d.profile.username, avatar: d.profile.avatar })); });
         }
         if (d.op === 0x9) { _SESSIONS.forEach(v => { if (v.s.readyState === 1) v.s.send(JSON.stringify({ op: 'REMOTE_WIPE', target: s.gid })); }); }
         if (d.op === 0xA) { const t = _SESSIONS.get(d.target); if (t && t.s.readyState === 1) t.s.send(JSON.stringify({ op: 0x3, f: 'AnoAI_bot', a: 'AnoAI_bot', p: d.p, t: 'text' })); }

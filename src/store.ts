@@ -14,6 +14,9 @@ export interface Contact {
   lastSeen: number;
   blocked?: boolean;
   description?: string;
+  avatar?: string;
+  online?: boolean;
+  lastOnlineTime?: number;
 }
 
 export interface UserProfile {
