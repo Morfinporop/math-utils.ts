@@ -18,5 +18,6 @@ export function useStore() {
     removeContact: useCallback((id: string) => store.removeContact(id), []),
     getLastMessage: useCallback((id: string) => store.getLastMessage(id), []),
     getMessageCount: useCallback((id: string) => store.getMessageCount(id), []),
+    isAdmin: store.isAdmin(),
   };
 }
