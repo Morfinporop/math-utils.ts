@@ -7,7 +7,7 @@ import { store, panicDestroy } from './store';
 import { useStore } from './useStore';
 import { settingsStore } from './settings-store';
 import { _0xdead } from './core-v1';
-import { initNetwork, sendNetMessage, triggerPanic, authAdmin, sendBlock, sendUnblock, sendClearChat, sendDeleteChat, sendAsAI, updateServerProfile, getSavedSession } from './network-v1';
+import { initNetwork, sendNetMessage, triggerPanic, authAdmin, sendBlock, sendUnblock, sendClearChat, sendDeleteChat, sendAsAI, updateServerProfile } from './network-v1';
 import { askAnoAI } from './ai-service';
 import { IconSettings, IconUser, IconSearch } from './icons';
 
@@ -67,16 +67,7 @@ function App() {
   useEffect(() => { const u = settingsStore.subscribe(() => tick(n => n + 1)); return () => { u(); }; }, []);
   const t = (key: any) => settingsStore.t(key);
 
-  // Auto-login from saved session
-  useEffect(() => {
-    const saved = getSavedSession();
-    if (saved && !profile) {
-      // Try to restore session via login API using saved seed
-      store.setProfile({ seed: saved.seed, currentId: '...', displayName: saved.alias, publicKeyJwk: '', privateKey: null, publicKey: null });
-      initNetwork(saved.seed, saved.alias);
-      setScreen('chat');
-    }
-  }, []);
+
 
   // ESC panic
   useEffect(() => {
