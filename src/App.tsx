@@ -61,6 +61,7 @@ function App() {
   const [editDesc, setEditDesc] = useState('');
   const [editAvatar, setEditAvatar] = useState('');
   const [editBanner, setEditBanner] = useState('');
+  const [editUsername, setEditUsername] = useState('');
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
@@ -100,18 +101,11 @@ function App() {
     setEditDesc(profile.description || '');
     setEditAvatar(profile.avatar || '');
     setEditBanner(profile.banner || '');
+    setEditUsername(profile.username || '');
     setShowProfile(true);
   };
 
-  const saveProfile = () => {
-    store.updateProfile({
-      displayName: profile?.isOwner ? profile.displayName : editName.trim() || profile?.displayName,
-      description: editDesc,
-      avatar: editAvatar,
-      banner: editBanner
-    });
-    setShowProfile(false);
-  };
+
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: (v: string) => void) => {
     const file = e.target.files?.[0];
@@ -182,26 +176,7 @@ function App() {
   const [authStep, setAuthStep] = useState(0);
   const [email, setEmail] = useState('');
   const [authError, setAuthError] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
 
-  // Auto-login if remembered
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('llb_auth');
-      if (saved) {
-        const { email: e, password: p } = JSON.parse(saved);
-        fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: e, password: p }) })
-          .then(r => r.json())
-          .then(data => {
-            if (data.ok) {
-              store.setProfile({ seed: data.seed, currentId: data.gid, displayName: data.name, username: data.username, publicKeyJwk: '', privateKey: null, publicKey: null, isOwner: data.isOwner, description: data.description, avatar: data.avatar, banner: data.banner });
-              initNetwork(data.seed, data.name);
-              setScreen('chat');
-            }
-          }).catch(() => {});
-      }
-    } catch {}
-  }, []);
 
   const doAuth = async () => {
     if (!email.trim() || !password.trim() || (authMode === 'register' && !name.trim())) return;
@@ -215,14 +190,13 @@ function App() {
       store.setProfile({ seed: data.seed, currentId: data.gid, displayName: data.name, username: data.username, publicKeyJwk: '', privateKey: null, publicKey: null, isOwner: data.isOwner, description: data.description, avatar: data.avatar, banner: data.banner });
       initNetwork(data.seed, data.name);
       // isOwner flag stored in profile for blue checkmark
-      if (rememberMe) { try { localStorage.setItem('llb_auth', JSON.stringify({ email, password })); } catch {} }
       setScreen('chat');
     } catch { setAuthError('Connection error'); }
   };
 
   // === LOGIN / REGISTER ===
   if (screen === 'login') {
-    const inp: React.CSSProperties = { width: '100%', padding: '16px 20px', borderRadius: 14, border: 'none', background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 16, outline: 'none', transition: 'all 0.2s' };
+    const inp: React.CSSProperties = { width: '100%', padding: '16px 20px', borderRadius: 14, border: '1px solid #e0e0e0', background: '#f5f5f5', color: '#111', fontSize: 16, outline: 'none', transition: 'all 0.2s' };
     const isReg = authMode === 'register';
     const regStep1 = isReg && authStep === 0;
     const regStep2 = isReg && authStep === 1;
@@ -233,18 +207,17 @@ function App() {
     };
 
     return (
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #06060e 0%, #0d0d1a 50%, #06060e 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: '100%', maxWidth: 400, padding: 24 }}>
-          <div style={{ marginBottom: 48 }} />
 
-          {/* Card */}
-          <div style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(30px)', borderRadius: 24, padding: 32, border: '1px solid rgba(255,255,255,0.06)' }}>
+
+          <div style={{ background: '#fff', borderRadius: 20, padding: 32, border: '1px solid #e0e0e0' }}>
             {/* Tabs */}
-            <div style={{ display: 'flex', marginBottom: 28, borderRadius: 12, overflow: 'hidden', background: 'rgba(255,255,255,0.04)' }}>
-              <button onClick={() => { setAuthMode('register'); setAuthStep(0); }} style={{ flex: 1, padding: '12px', fontSize: 13, border: 'none', cursor: 'pointer', background: isReg ? 'rgba(255,255,255,0.1)' : 'transparent', color: isReg ? '#fff' : '#555', fontWeight: 600, transition: 'all 0.2s' }}>
+            <div style={{ display: 'flex', marginBottom: 28, borderRadius: 12, overflow: 'hidden', background: '#f5f5f5' }}>
+              <button onClick={() => { setAuthMode('register'); setAuthStep(0); }} style={{ flex: 1, padding: '12px', fontSize: 13, border: 'none', cursor: 'pointer', background: isReg ? '#111' : 'transparent', color: isReg ? '#fff' : '#999', fontWeight: 600, borderRadius: 10, transition: 'all 0.2s' }}>
                 {settingsStore.get().lang === 'ru' ? 'Регистрация' : 'Register'}
               </button>
-              <button onClick={() => setAuthMode('login')} style={{ flex: 1, padding: '12px', fontSize: 13, border: 'none', cursor: 'pointer', background: !isReg ? 'rgba(255,255,255,0.1)' : 'transparent', color: !isReg ? '#fff' : '#555', fontWeight: 600, transition: 'all 0.2s' }}>
+              <button onClick={() => setAuthMode('login')} style={{ flex: 1, padding: '12px', fontSize: 13, border: 'none', cursor: 'pointer', background: !isReg ? '#111' : 'transparent', color: !isReg ? '#fff' : '#999', fontWeight: 600, borderRadius: 10, transition: 'all 0.2s' }}>
                 {settingsStore.get().lang === 'ru' ? 'Вход' : 'Login'}
               </button>
             </div>
@@ -252,8 +225,8 @@ function App() {
             {/* Step indicator for register */}
             {isReg && (
               <div style={{ display: 'flex', gap: 8, marginBottom: 24, justifyContent: 'center' }}>
-                <div style={{ width: 32, height: 3, borderRadius: 2, background: '#fff', opacity: authStep === 0 ? 1 : 0.2, transition: 'opacity 0.3s' }} />
-                <div style={{ width: 32, height: 3, borderRadius: 2, background: '#fff', opacity: authStep === 1 ? 1 : 0.2, transition: 'opacity 0.3s' }} />
+                <div style={{ width: 32, height: 3, borderRadius: 2, background: '#111', opacity: authStep === 0 ? 1 : 0.15, transition: 'opacity 0.3s' }} />
+                <div style={{ width: 32, height: 3, borderRadius: 2, background: '#111', opacity: authStep === 1 ? 1 : 0.15, transition: 'opacity 0.3s' }} />
               </div>
             )}
 
@@ -262,8 +235,8 @@ function App() {
               {regStep1 && (
                 <>
                   <div style={{ textAlign: 'center', marginBottom: 8 }}>
-                    <div style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 4 }}>{settingsStore.get().lang === 'ru' ? 'Как вас зовут?' : 'What is your name?'}</div>
-                    <div style={{ fontSize: 12, color: '#555' }}>{settingsStore.get().lang === 'ru' ? 'Это имя увидят другие' : 'Others will see this name'}</div>
+                    <div style={{ fontSize: 18, fontWeight: 600, color: '#111', marginBottom: 4 }}>{settingsStore.get().lang === 'ru' ? 'Как вас зовут?' : 'What is your name?'}</div>
+                    <div style={{ fontSize: 12, color: '#999' }}>{settingsStore.get().lang === 'ru' ? 'Это имя увидят другие' : 'Others will see this name'}</div>
                   </div>
                   <input type="text" value={name} onChange={e => setName(e.target.value.slice(0, 16))} placeholder={t('enterName')} maxLength={16} style={inp} autoFocus
                     onKeyDown={e => e.key === 'Enter' && nextStep()} />
@@ -274,8 +247,8 @@ function App() {
               {regStep2 && (
                 <>
                   <div style={{ textAlign: 'center', marginBottom: 8 }}>
-                    <div style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 4 }}>{settingsStore.get().lang === 'ru' ? `Привет, ${name}!` : `Hello, ${name}!`}</div>
-                    <div style={{ fontSize: 12, color: '#555' }}>{settingsStore.get().lang === 'ru' ? 'Создайте аккаунт' : 'Create your account'}</div>
+                    <div style={{ fontSize: 18, fontWeight: 600, color: '#111', marginBottom: 4 }}>{settingsStore.get().lang === 'ru' ? `Привет, ${name}!` : `Hello, ${name}!`}</div>
+                    <div style={{ fontSize: 12, color: '#999' }}>{settingsStore.get().lang === 'ru' ? 'Создайте аккаунт' : 'Create your account'}</div>
                   </div>
                   <input type="email" value={email} onChange={e => setEmail(e.target.value.slice(0, 50))} placeholder="Email" maxLength={50} style={inp} autoFocus
                     onKeyDown={e => e.key === 'Enter' && nextStep()} />
@@ -296,19 +269,14 @@ function App() {
 
               {authError && <div style={{ color: '#ff4444', fontSize: 12, textAlign: 'center' }}>{authError}</div>}
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} style={{ width: 16, height: 16 }} />
-                <span style={{ fontSize: 12, color: '#888' }}>{settingsStore.get().lang === 'ru' ? 'Запомнить меня' : 'Remember me'}</span>
-              </label>
-
               <div style={{ display: 'flex', gap: 10 }}>
                 {regStep2 && (
-                  <button onClick={() => setAuthStep(0)} style={{ padding: '16px 20px', borderRadius: 14, background: 'rgba(255,255,255,0.06)', color: '#888', fontSize: 14, border: 'none', cursor: 'pointer' }}>
+                  <button onClick={() => setAuthStep(0)} style={{ padding: '16px 20px', borderRadius: 14, background: '#f5f5f5', color: '#666', fontSize: 14, border: '1px solid #e0e0e0', cursor: 'pointer' }}>
                     {settingsStore.get().lang === 'ru' ? 'Назад' : 'Back'}
                   </button>
                 )}
                 <button onClick={nextStep}
-                  style={{ flex: 1, padding: 16, borderRadius: 14, background: '#fff', color: '#000', fontSize: 16, fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
+                  style={{ flex: 1, padding: 16, borderRadius: 14, background: '#111', color: '#fff', fontSize: 16, fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
                   {regStep1 ? (settingsStore.get().lang === 'ru' ? 'Далее' : 'Next') : (isReg ? t('register') : (settingsStore.get().lang === 'ru' ? 'Войти' : 'Sign In'))}
                 </button>
               </div>
@@ -333,18 +301,23 @@ function App() {
   );
 
   // === PROFILE MODAL ===
+  // Auto-save profile on close
+  const closeProfile = () => {
+    store.updateProfile({ displayName: editName || profile?.displayName, description: editDesc, avatar: editAvatar, banner: editBanner, username: editUsername || profile?.username });
+    updateProfile({ name: editName, description: editDesc, avatar: editAvatar, banner: editBanner, username: editUsername });
+    setShowProfile(false);
+  };
+
   const profileModal = showProfile && (
-    <div onClick={() => setShowProfile(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+    <div onClick={closeProfile} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
       <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 400, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
-        {/* Banner */}
         <div onClick={() => bannerInputRef.current?.click()} style={{
-          height: 90, borderRadius: 0, cursor: 'pointer', position: 'relative',
-          background: editBanner ? `url(${editBanner}) center/cover` : 'linear-gradient(135deg, #ddd, #bbb)',
+          height: 100, cursor: 'pointer',
+          background: editBanner ? `url(${editBanner}) center/cover` : 'linear-gradient(135deg, #e0e0e0, #ccc)',
           display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
-          <span style={{ fontSize: 11, color: '#fff', background: 'rgba(0,0,0,0.4)', padding: '4px 12px', borderRadius: 20 }}>{t('banner')}</span>
+          <span style={{ fontSize: 10, color: '#fff', background: 'rgba(0,0,0,0.3)', padding: '3px 10px', borderRadius: 20 }}>{t('banner')}</span>
         </div>
-        {/* Avatar */}
         <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: -32, paddingLeft: 20 }}>
           <div onClick={() => avatarInputRef.current?.click()} style={{
             width: 64, height: 64, borderRadius: '50%', border: '3px solid var(--bg)', cursor: 'pointer', overflow: 'hidden',
@@ -355,29 +328,15 @@ function App() {
           </div>
         </div>
         <div style={{ padding: '8px 20px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-            <span style={{ fontSize: 18, fontWeight: 700 }}>{profile.displayName}</span>
-            {isOwner && <svg width="18" height="18" viewBox="0 0 24 24" fill="#3b82f6"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>}
+          <input type="text" value={editName} onChange={e => setEditName(e.target.value.slice(0, 16))} maxLength={16}
+            style={{ fontSize: 18, fontWeight: 700, background: 'transparent', border: 'none', borderBottom: '1px dashed var(--border)', color: 'var(--text)', outline: 'none', width: '100%', padding: '4px 0' }} />
+          <div style={{ display: 'flex', alignItems: 'center', marginTop: 4, marginBottom: 12 }}>
+            <span style={{ color: 'var(--text3)', fontSize: 12 }}>@</span>
+            <input type="text" value={editUsername} onChange={e => setEditUsername(e.target.value.replace(/[^a-z0-9_]/gi, '').slice(0, 20))} maxLength={20}
+              style={{ fontSize: 12, background: 'transparent', border: 'none', borderBottom: '1px dashed var(--border)', color: 'var(--text2)', outline: 'none', width: '100%', padding: '2px 0' }} />
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 16 }}>@{profile.username}</div>
-
-          {!isOwner && (
-            <div style={{ marginBottom: 10 }}>
-              <label style={{ fontSize: 11, color: 'var(--text3)', display: 'block', marginBottom: 4 }}>{t('enterName')}</label>
-              <input type="text" value={editName} onChange={e => setEditName(e.target.value)}
-                style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text)', fontSize: 13, outline: 'none' }} />
-            </div>
-          )}
-
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: 11, color: 'var(--text3)', display: 'block', marginBottom: 4 }}>{t('bio')}</label>
-            <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)} placeholder="..."
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text)', fontSize: 13, outline: 'none', resize: 'none', height: 60 }} />
-          </div>
-
-          <button onClick={() => { saveProfile(); updateProfile({ name: editName, description: editDesc, avatar: editAvatar, banner: editBanner }); }} style={{ width: '100%', padding: 12, borderRadius: 8, background: 'var(--accent)', color: 'var(--bg)', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
-            {t('save')}
-          </button>
+          <textarea value={editDesc} onChange={e => setEditDesc(e.target.value.slice(0, 200))} maxLength={200} placeholder={t('bio')}
+            style={{ width: '100%', padding: '8px 0', borderRadius: 0, border: 'none', borderBottom: '1px dashed var(--border)', background: 'transparent', color: 'var(--text)', fontSize: 13, outline: 'none', resize: 'none', height: 50 }} />
         </div>
       </div>
     </div>

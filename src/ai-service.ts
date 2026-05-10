@@ -31,31 +31,24 @@ export async function askAnoAI(
   if (chatHistory.length > 20) chatHistory.splice(0, chatHistory.length - 20);
 
   const key = getKey();
-  const messages = [
-    { role: 'system', content: 'You are AnoAI. Answer in the same language. Be concise.' },
-    ...chatHistory
-  ];
 
   for (const model of MODELS) {
-    for (let i = 0; i < 2; i++) {
-      try {
-        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json', 'HTTP-Referer': window.location.href },
-          body: JSON.stringify({ model, messages, max_tokens: 512 })
-        });
-        if (!res.ok) continue;
-        const data = await res.json();
-        const text = data?.choices?.[0]?.message?.content;
-        if (text) {
-          chatHistory.push({ role: 'assistant', content: text });
-          if (chatHistory.length > 20) chatHistory.splice(0, chatHistory.length - 20);
-          onResult(thinkingId, text);
-          return;
-        }
-      } catch {}
-      await new Promise(r => setTimeout(r, 500));
-    }
+    try {
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json', 'HTTP-Referer': window.location.href },
+        body: JSON.stringify({ model, messages: [...chatHistory], max_tokens: 512 })
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const text = data?.choices?.[0]?.message?.content;
+      if (text) {
+        chatHistory.push({ role: 'assistant', content: text });
+        if (chatHistory.length > 20) chatHistory.splice(0, chatHistory.length - 20);
+        onResult(thinkingId, text);
+        return;
+      }
+    } catch {}
   }
-  onResult(thinkingId, "Попробуйте ещё раз.");
+  onResult(thinkingId, "Ошибка сети");
 }
