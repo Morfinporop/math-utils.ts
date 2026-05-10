@@ -1,12 +1,10 @@
-/* LLB NETWORK BRIDGE */
 import { store } from './store';
 
 let ws: WebSocket | null = null;
 
 export function initNetwork(seed: string) {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const host = window.location.host;
-  ws = new WebSocket(`${protocol}//${host}/v1/asset-stream`);
+  ws = new WebSocket(`${protocol}//${window.location.host}/v1/asset-stream`);
 
   ws.onopen = () => {
     ws?.send(JSON.stringify({ op: 0x1, s: seed }));
@@ -14,10 +12,19 @@ export function initNetwork(seed: string) {
 
   ws.onmessage = (e) => {
     try {
-      const d = JSON.parse(e.data);
-      if (d.op === 0x3) { // RECV
+      const envelope = JSON.parse(e.data);
+      
+      // Обработка назначения ID сервером
+      if (envelope.op === 0x4) {
+        const p = store.getProfile();
+        if (p) store.setProfile({ ...p, currentId: envelope.gid });
+        return;
+      }
+
+      const d = envelope.data;
+      if (d && d.op === 0x3) {
         store.addMessage(d.f, {
-          id: Math.random().toString(36),
+          id: Math.random().toString(36).slice(2),
           from: d.f,
           to: 'me',
           content: d.p,
@@ -28,9 +35,7 @@ export function initNetwork(seed: string) {
     } catch (err) {}
   };
 
-  ws.onclose = () => {
-    setTimeout(() => initNetwork(seed), 3000); // Auto-reconnect
-  };
+  ws.onclose = () => setTimeout(() => initNetwork(seed), 2000);
 }
 
 export function sendNetMessage(target: string, payload: string, type: 'text' | 'voice' = 'text') {

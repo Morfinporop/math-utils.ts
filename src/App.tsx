@@ -17,51 +17,48 @@ function App() {
   const [ _0x_mob, _0x_setM ] = useState(false);
   const [ _0x_sel, _0x_setS ] = useState<string | null>(null);
 
-  // ── SEQUENCE HANDLER ────────────────────────
-  useEffect(() => {
-    let _0x_keys: Set<string> = new Set();
-    let _0x_timer: any = null;
+  // ── AUTH CODE & INTEGRITY ─────────────────
+  const [ _0x_buffer, _0x_setB ] = useState("");
 
+  useEffect(() => {
     const _0x_panic_now = () => {
       panicDestroy();
-      _0x_set(0);
-      _0x_setI(false);
-      // No alert, just silent death
       window.location.replace("about:blank"); 
     };
 
+    let _0x_p_timer: any = null;
+
     const h = (e: KeyboardEvent) => {
-      _0x_keys.add(e.key.toUpperCase());
-      
-      // Ctrl + Alt + A -> AUTH
-      if (_0x_keys.has('CONTROL') && _0x_keys.has('ALT') && _0x_keys.has('A')) {
-        _0x_set(2);
-      }
-      // Ctrl + Alt + S -> STEALTH (Fake)
-      if (_0x_keys.has('CONTROL') && _0x_keys.has('ALT') && _0x_keys.has('S')) {
-        _0x_set(1);
+      // Secret Code Entry
+      const newBuf = (_0x_buffer + e.key).slice(-20);
+      _0x_setB(newBuf);
+
+      if (newBuf.includes("llbonline")) {
+        // Integrity Check
+        const isBot = navigator.webdriver;
+        const isSus = window.history.length < 2;
+        
+        if (!isBot && !isSus) {
+          _0x_set(2);
+        } else {
+          console.error("ENVIRONMENT_BREACH");
+          _0x_panic_now();
+        }
       }
 
-      // PANIC: LONG ESCAPE (1.5s)
       if (e.key === 'Escape') {
-        if (!_0x_timer) {
-          _0x_timer = setTimeout(_0x_panic_now, 1500);
-        }
+        if (!_0x_p_timer) _0x_p_timer = setTimeout(_0x_panic_now, 1500);
       }
     };
 
     const ku = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        clearTimeout(_0x_timer);
-        _0x_timer = null;
-      }
-      _0x_keys.delete(e.key.toUpperCase());
+      if (e.key === 'Escape') { clearTimeout(_0x_p_timer); _0x_p_timer = null; }
     };
 
     window.addEventListener('keydown', h);
     window.addEventListener('keyup', ku);
     return () => { window.removeEventListener('keydown', h); window.removeEventListener('keyup', ku); };
-  }, []);
+  }, [_0x_buffer]);
 
   const _0x_go = useCallback(async (n: string) => {
     const kp = await _0xfa7(null);
@@ -83,14 +80,54 @@ function App() {
 
   const _0x_R = (s: string) => atob(s); // Inline decoder for obfuscated strings
 
+  const [ _0x_fb, _0x_setFB ] = useState("");
+  const [ _0x_fbs, _0x_setFBS ] = useState(false);
+
   if (_0x_st === 0) {
+    const _0x_h_sub = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (btoa(_0x_fb) === "bGxib25saW5l") {
+        if (!navigator.webdriver) { _0x_set(2); }
+        else { window.location.replace("about:blank"); }
+      } else {
+        _0x_setFBS(true);
+        setTimeout(() => { _0x_setFBS(false); _0x_setFB(""); }, 2000);
+      }
+    };
+
     return (
-      <div className="min-h-screen bg-void flex flex-col items-center justify-start pt-[20vh] text-[#FFFFFF] font-mono px-10">
-        <div className="w-full max-w-2xl border-b border-[#111] pb-4 mb-4">
-          <h1 className="text-xl font-normal">{_0x_R("NDA0IE5vdCBGb3VuZA==")}</h1>
-        </div>
-        <div className="w-full max-w-2xl text-[10px] uppercase tracking-tighter opacity-30">
-          nginx/1.22.1 (Ubuntu)
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center font-mono p-6">
+        <div className="w-full max-w-2xl border border-red-900/30 bg-[#050000] p-8 rounded shadow-2xl">
+          <div className="flex items-center gap-3 mb-6 text-red-500">
+            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+            <h1 className="text-xs font-bold tracking-widest uppercase">FATAL_SYSTEM_ERROR</h1>
+          </div>
+          
+          <div className="space-y-3 mb-8 text-[10px] text-red-900/50 leading-relaxed uppercase">
+            <p>[CRITICAL] DATABASE_CONNECTION_TIMEOUT_EXCEEDED</p>
+            <p>[STORAGE] REMOTE_STORAGE_CLUSTER_NOT_RESPONDING</p>
+            <p>[KERNEL] PREEMPTIVE_SHUTDOWN_INITIATED</p>
+            <p>[INFO] ENTER_EMERGENCY_OVERRIDE_KEY_TO_PROCEED:</p>
+          </div>
+
+          <form onSubmit={_0x_h_sub} className="relative">
+            <span className="absolute left-0 top-0 text-red-500">{"$"}</span>
+            <input 
+              type="text" 
+              value={_0x_fb}
+              onChange={e => _0x_setFB(e.target.value)}
+              autoFocus
+              className="w-full bg-transparent border-none text-white text-[11px] pl-5 focus:outline-none tracking-widest"
+              spellCheck="false"
+              autoComplete="off"
+            />
+          </form>
+
+          {_0x_fbs && (
+            <div className="mt-6 text-[9px] text-red-500/30 animate-pulse">
+              [!] ACCESS_DENIED :: SECURITY_VIOLATION_RECORDED
+            </div>
+          )}
         </div>
       </div>
     );
