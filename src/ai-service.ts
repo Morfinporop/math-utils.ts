@@ -32,7 +32,7 @@ export async function askAnoAI(
 
   const key = getKey();
   const messages = [
-    { role: 'system', content: 'You are AnoAI, a helpful assistant. Answer in the same language the user writes. Be concise and natural.' },
+    { role: 'system', content: 'You are AnoAI. Answer in the same language. Be concise.' },
     ...chatHistory
   ];
 

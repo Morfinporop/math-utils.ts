@@ -123,8 +123,9 @@ function App() {
     reader.onloadend = () => {
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const maxW = 200;
-        const maxH = 100;
+        const isAvatar = setter === setEditAvatar;
+        const maxW = isAvatar ? 150 : 800;
+        const maxH = isAvatar ? 150 : 300;
         let w = img.width;
         let h = img.height;
         if (w > maxW) { h = h * maxW / w; w = maxW; }
@@ -134,7 +135,7 @@ function App() {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, w, h);
-          setter(canvas.toDataURL('image/jpeg', 0.3));
+          setter(canvas.toDataURL('image/jpeg', isAvatar ? 0.5 : 0.7));
         }
       };
       img.src = reader.result as string;
@@ -160,8 +161,11 @@ function App() {
 
   // Fix: only select chat if contact actually exists
   const handleSelectChat = (id: string) => {
-    if (id === profile?.currentId) return; // Cant chat with self
-    if (contacts.has(id)) setSelectedChat(id);
+    if (id === profile?.currentId) return;
+    if (contacts.has(id)) {
+      setSelectedChat(id);
+      store.markRead(id);
+    }
   };
 
   const [viewingProfile, setViewingProfile] = useState<string | null>(null);

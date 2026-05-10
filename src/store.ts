@@ -44,6 +44,7 @@ class EphemeralStore {
   private _p: UserProfile | null = null;
   private _l: Set<Listener> = new Set();
   private _isAdmin = false;
+  private _read: Map<string, number> = new Map(); // cid -> last read count
 
   constructor() {
     this.addContact('AnoAI_bot', { displayName: 'AnoAI_bot', currentId: 'AnoAI_bot', publicKey: '', lastSeen: Date.now(), description: 'AnoAI — AI ассистент LLB', online: true });
@@ -69,11 +70,18 @@ class EphemeralStore {
   getMessages(cid: string) { return [...(this._m.get(cid) || [])]; }
   getLastMessage(cid: string) { const a = this._m.get(cid); return a?.[a.length - 1]; }
   
-  // Count only INCOMING unread messages
+  markRead(cid: string) {
+    const msgs = this._m.get(cid) || [];
+    const myId = this._p?.currentId;
+    this._read.set(cid, msgs.filter(m => m.from !== myId).length);
+  }
+
   getUnreadCount(cid: string) {
     const msgs = this._m.get(cid) || [];
     const myId = this._p?.currentId;
-    return msgs.filter(m => m.from !== myId).length;
+    const total = msgs.filter(m => m.from !== myId).length;
+    const read = this._read.get(cid) || 0;
+    return Math.max(0, total - read);
   }
 
   clearMessages(cid: string) { this._m.delete(cid); this._emit(); }
