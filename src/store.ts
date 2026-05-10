@@ -20,6 +20,7 @@ export interface UserProfile {
   seed: string;
   currentId: string;
   displayName: string;
+  username?: string;
   publicKeyJwk: string;
   privateKey: CryptoKey | null;
   publicKey: CryptoKey | null;

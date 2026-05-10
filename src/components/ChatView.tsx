@@ -12,12 +12,13 @@ interface Props {
   onSendMessage: (text: string) => void;
   onSendVoice: (blob: Blob) => void;
   onDeleteChat: () => void;
+  onViewProfile?: () => void;
 }
 
 const av: React.CSSProperties = { width: 38, height: 38, borderRadius: '50%', border: '1px solid var(--border)', background: 'var(--bg3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text2)', flexShrink: 0 };
 const circBtn = (bg: string, col: string): React.CSSProperties => ({ width: 42, height: 42, borderRadius: '50%', border: '1px solid var(--border)', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: col, cursor: 'pointer', flexShrink: 0 });
 
-export function ChatView({ contact, contactId, messages, myId, onSendMessage, onSendVoice, onDeleteChat }: Props) {
+export function ChatView({ contact, contactId, messages, myId, onSendMessage, onSendVoice, onDeleteChat, onViewProfile }: Props) {
   const [text, setText] = useState('');
   const [isRec, setIsRec] = useState(false);
   const [recTime, setRecTime] = useState(0);
@@ -48,7 +49,7 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg)' }}>
       <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <button onClick={() => setShowContactProfile(!showContactProfile)} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text)', padding: 0 }}>
+        <button onClick={() => { if (onViewProfile) onViewProfile(); else setShowContactProfile(!showContactProfile); }} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text)', padding: 0 }}>
           <div style={av}>{isBot ? <IconRobot size={18} /> : <IconUser size={18} />}</div>
           <div style={{ textAlign: 'left' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>

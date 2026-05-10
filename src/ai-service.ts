@@ -17,13 +17,9 @@ const getKey = (): string => {
 
 const BAD = /насилие|убийство|torture|gore|rape|murder|наркотик|жестокость|животн/i;
 
-// Memory: store conversation history
 const chatHistory: { role: string; content: string }[] = [];
-const MAX_HISTORY = 20; // Keep last 20 messages
 
-export function clearAIHistory() {
-  chatHistory.length = 0;
-}
+export function clearAIHistory() { chatHistory.length = 0; }
 
 export async function askAnoAI(
   prompt: string,
@@ -33,13 +29,20 @@ export async function askAnoAI(
 ): Promise<void> {
   if (BAD.test(prompt)) { onResult(thinkingId, "[blocked]"); return; }
 
-  // Add user message to history
   chatHistory.push({ role: 'user', content: prompt });
-  if (chatHistory.length > MAX_HISTORY) chatHistory.splice(0, chatHistory.length - MAX_HISTORY);
+  if (chatHistory.length > 30) chatHistory.splice(0, chatHistory.length - 30);
 
   const key = getKey();
   const messages = [
-    { role: 'system', content: 'You are AnoAI, a helpful assistant inside the LLB secure messenger. Answer in the same language the user writes in. Be concise and accurate. Remember the conversation context.' },
+    { role: 'system', content: `You are AnoAI — a friendly and natural AI assistant inside LLB messenger. 
+Rules:
+- Always answer in the SAME language the user writes in
+- Be natural, conversational, like a real person chatting
+- Remember ALL previous messages in this conversation and reference them naturally
+- If user says "как дела" answer naturally like "хорошо, а у тебя?" not "задавай вопрос"
+- If user asks about something from a previous message, answer based on context
+- Never say "I'm an AI" unless directly asked
+- Be helpful, concise, friendly` },
     ...chatHistory
   ];
 
@@ -49,15 +52,14 @@ export async function askAnoAI(
         const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json', 'HTTP-Referer': window.location.href, 'X-Title': 'LLB' },
-          body: JSON.stringify({ model, messages, max_tokens: 1024 })
+          body: JSON.stringify({ model, messages, max_tokens: 1024, temperature: 0.8 })
         });
         if (!res.ok) continue;
         const data = await res.json();
         const text = data?.choices?.[0]?.message?.content;
         if (text) {
-          // Add assistant reply to history
           chatHistory.push({ role: 'assistant', content: text });
-          if (chatHistory.length > MAX_HISTORY) chatHistory.splice(0, chatHistory.length - MAX_HISTORY);
+          if (chatHistory.length > 30) chatHistory.splice(0, chatHistory.length - 30);
           onResult(thinkingId, text);
           return;
         }
