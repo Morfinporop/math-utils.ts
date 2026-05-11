@@ -9,7 +9,7 @@ import { settingsStore } from './settings-store';
 import { _0xdead } from './core-v1';
 import { initNetwork, sendNetMessage, sendBlock, sendUnblock, sendClear, sendAsAI, updateProfile, panic } from './network-v1';
 import { askAnoAI } from './ai-service';
-import { IconSettings, IconUser, IconSearch } from './icons';
+import { IconSettings, IconUser, IconSearch, IconLogout } from './icons';
 
 function App() {
   const { profile, contacts, getMessages, addMessage, removeContact, getUnreadCount, isAdmin } = useStore();
@@ -149,7 +149,7 @@ function App() {
     addMessage(chatId, { id: _0xdead(), from: profile.currentId, to: chatId, content: text, timestamp: Date.now(), type: 'text' });
     if (chatId === 'AnoAI_bot') {
       const tid = _0xdead();
-      addMessage('AnoAI_bot', { id: tid, from: 'AnoAI_bot', to: 'me', content: '...', timestamp: Date.now(), type: 'text' });
+      addMessage('AnoAI_bot', { id: tid, from: 'AnoAI_bot', to: 'me', content: 'думает...', timestamp: Date.now(), type: 'text' });
       askAnoAI(text, () => {}, (_i, res) => { store.updateMessage('AnoAI_bot', tid, res); }, tid);
     } else { sendNetMessage(chatId, text, 'text'); }
   };
@@ -208,7 +208,7 @@ function App() {
     };
 
     return (
-      <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', background: `url(https://abrakadabra.fun/uploads/posts/2021-12/1639858433_2-abrakadabra-fun-p-cherno-belii-fon-dlya-prezentatsii-2.jpg) center/cover`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', position: 'relative' }}>
         <div style={{ width: '100%', maxWidth: 400, padding: 24 }}>
 
 
@@ -282,6 +282,14 @@ function App() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+        {/* Scrolling credits */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, overflow: 'hidden', height: 30, background: 'rgba(0,0,0,0.3)' }}>
+          <div style={{ display: 'flex', gap: 40, whiteSpace: 'nowrap', animation: 'scrollCredits 15s linear infinite', color: '#fff', fontSize: 11, lineHeight: '30px' }}>
+            <span>MoStudio</span><span>FillEngine</span><span>PlatunNet</span><span>LofiDesigner</span>
+            <span>MoStudio</span><span>FillEngine</span><span>PlatunNet</span><span>LofiDesigner</span>
+            <span>MoStudio</span><span>FillEngine</span><span>PlatunNet</span><span>LofiDesigner</span>
           </div>
         </div>
       </div>
@@ -454,20 +462,23 @@ function App() {
 
       <div style={{ width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border)', height: '100%' }}>
         <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)', letterSpacing: '0.12em' }}>LLB</span>
-            {isOwner && <svg width="14" height="14" viewBox="0 0 24 24" fill="#3b82f6"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>}
-            <span style={{ fontSize: 10, color: 'var(--text3)', marginLeft: 4 }}>{t('llbFull')}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img src="https://www.freeiconspng.com/uploads/black-facebook-messenger-logo-29.png" style={{ width: 24, height: 24 }} />
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>LLB</span>
+            <span style={{ fontSize: 11, color: 'var(--text3)' }}>Мессенджер</span>
           </div>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <button onClick={openProfile} style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              {profile.avatar ? <img src={profile.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <IconUser size={16} />}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button className="light-btn" onClick={openProfile} style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {profile.avatar ? <img src={profile.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <IconUser size={18} />}
             </button>
-            <button onClick={() => setShowSearch(v => !v)} style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconSearch size={15} />
+            <button className="light-btn" onClick={() => setShowSearch(v => !v)} style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconSearch size={17} />
             </button>
-            <button className="gear-btn" onClick={() => setShowSettings(true)} style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconSettings size={16} />
+            <button className="light-btn gear-btn" onClick={() => setShowSettings(true)} style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconSettings size={17} />
+            </button>
+            <button onClick={handleLogout} style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconLogout size={17} />
             </button>
           </div>
         </div>
@@ -486,8 +497,8 @@ function App() {
                     width: '100%', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', marginBottom: 4,
                     background: 'var(--bg2)', borderRadius: 8, cursor: 'pointer', border: '1px solid var(--border)', color: 'var(--text)'
                   }}>
-                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--bg3)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text2)', flexShrink: 0 }}>
-                      <IconUser size={14} />
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--bg3)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text2)', flexShrink: 0, overflow: 'hidden' }}>
+                      {r.avatar ? <img src={r.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <IconUser size={14} />}
                     </div>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>

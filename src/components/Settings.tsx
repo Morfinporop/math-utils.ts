@@ -50,10 +50,7 @@ export function Settings({ onClose, onLogout }: Props) {
         {/* Danger Zone */}
         <div style={{ padding: 16, border: '2px solid var(--danger)', borderRadius: 12, marginTop: 20 }}>
           <div style={{ fontSize: 12, color: 'var(--danger)', fontWeight: 700, marginBottom: 12 }}>{t('dangerZone')}</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <button onClick={onLogout} style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid var(--danger)', background: 'transparent', color: 'var(--danger)', fontSize: 13, cursor: 'pointer' }}>{t('logout')}</button>
-            <button onClick={() => { if (confirm('?')) onLogout(); }} style={{ width: '100%', padding: 12, borderRadius: 8, border: 'none', background: 'var(--danger)', color: '#fff', fontSize: 13, cursor: 'pointer' }}>{t('deleteAccount')}</button>
-          </div>
+          <button onClick={() => { if (confirm('?')) onLogout(); }} style={{ width: '100%', padding: 12, borderRadius: 8, border: 'none', background: 'var(--danger)', color: '#fff', fontSize: 13, cursor: 'pointer' }}>{t('deleteAccount')}</button>
         </div>
       </div>
     </div>

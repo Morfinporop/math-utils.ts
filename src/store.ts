@@ -47,7 +47,7 @@ class EphemeralStore {
   private _read: Map<string, number> = new Map(); // cid -> last read count
 
   constructor() {
-    this.addContact('AnoAI_bot', { displayName: 'AnoAI_bot', currentId: 'AnoAI_bot', publicKey: '', lastSeen: Date.now(), description: 'AnoAI — AI ассистент LLB', online: true });
+    this.addContact('AnoAI_bot', { displayName: 'AnoAI', currentId: 'AnoAI_bot', publicKey: '', lastSeen: Date.now(), description: 'AnoAI — AI ассистент LLB мессенджера', online: true });
   }
 
   subscribe(fn: Listener) { this._l.add(fn); return () => { this._l.delete(fn); }; }

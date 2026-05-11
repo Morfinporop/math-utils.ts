@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Message, Contact } from '../store';
 import { settingsStore } from '../settings-store';
-import { IconSend, IconMic, IconTrash, IconRobot, IconUser, IconX } from '../icons';
+import { IconMic, IconTrash, IconRobot, IconUser, IconX, IconPaperPlane } from '../icons';
 
 interface Props {
   contact: Contact;
@@ -35,16 +35,41 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
   const send = () => { const v = text.trim(); if (v && !blocked) { onSendMessage(v); setText(''); } };
 
+  const streamRef = useRef<MediaStream | null>(null);
+
   const startRec = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       const mr = new MediaRecorder(stream); mrRef.current = mr; chunks.current = [];
       mr.ondataavailable = e => { if (e.data.size > 0) chunks.current.push(e.data); };
-      mr.onstop = async () => { const raw = new Blob(chunks.current, { type: 'audio/webm' }); const { _0x_morph } = await import('../registry-0x'); onSendVoice(await _0x_morph(raw)); stream.getTracks().forEach(t => t.stop()); };
-      mr.start(); setIsRec(true); setRecTime(0); timerRef.current = setInterval(() => setRecTime(t => t + 1), 1000);
+      mr.start(); setIsRec(true); setRecTime(0);
+      const start = Date.now();
+      timerRef.current = setInterval(() => setRecTime(Math.floor((Date.now() - start) / 1000)), 100);
     } catch {}
   };
-  const stopRec = () => { setTimeout(() => { mrRef.current?.stop(); setIsRec(false); if (timerRef.current) clearInterval(timerRef.current); }, 300); };
+
+  const cancelRec = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    mrRef.current?.stop();
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    chunks.current = [];
+    setIsRec(false);
+  };
+
+  const sendRec = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (mrRef.current && mrRef.current.state !== 'inactive') {
+      mrRef.current.onstop = async () => {
+        const raw = new Blob(chunks.current, { type: 'audio/webm' });
+        const { _0x_morph } = await import('../registry-0x');
+        onSendVoice(await _0x_morph(raw));
+        streamRef.current?.getTracks().forEach(t => t.stop());
+      };
+      mrRef.current.stop();
+    }
+    setIsRec(false);
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg)' }}>
@@ -79,7 +104,9 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
       {showContactProfile && (
         <div onClick={() => setShowContactProfile(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 400, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
-            <div style={{ height: 90, background: 'linear-gradient(135deg, #ddd, #bbb)' }} />
+            <div style={{ height: 90, background: isBot ? 'linear-gradient(135deg, #111, #333)' : 'linear-gradient(135deg, #ddd, #bbb)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {isBot && <span style={{ color: '#fff', fontSize: 14, fontWeight: 800, letterSpacing: '0.1em' }}>Я КРУТАЯ ЧЕ ПОДЕЛАТЬ</span>}
+            </div>
             <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: -32, paddingLeft: 20 }}>
               <div style={{ width: 64, height: 64, borderRadius: '50%', border: '3px solid var(--bg)', background: 'var(--bg2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text2)', position: 'relative', zIndex: 1 }}>
                 {isBot ? <IconRobot size={28} /> : <IconUser size={28} />}
@@ -123,11 +150,12 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
       ) : (
         <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
           {isRec ? (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff4444' }} />
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button onClick={cancelRec} style={{ ...circBtn('#ff4444', '#fff'), width: 40, height: 40 }}><IconX size={18} /></button>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff4444', animation: 'pulse 1s infinite' }} />
               <span style={{ fontSize: 14, fontFamily: 'monospace', color: 'var(--text)' }}>{Math.floor(recTime/60)}:{(recTime%60).toString().padStart(2,'0')}</span>
               <div style={{ flex: 1 }} />
-              <button onClick={stopRec} style={{ ...circBtn('#ff4444', '#fff'), width: 36, height: 36 }}><IconX size={16} /></button>
+              <button onClick={sendRec} style={{ ...circBtn('#111', '#fff'), width: 40, height: 40 }}><IconPaperPlane size={18} /></button>
             </div>
           ) : (
             <>
@@ -135,7 +163,7 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); send(); } }}
                 style={{ flex: 1, padding: '12px 18px', borderRadius: 24, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text)', fontSize: 14, outline: 'none' }} />
               {!isBot && <button onClick={startRec} style={circBtn('var(--bg2)', 'var(--text)')}><IconMic size={18} /></button>}
-              <button onClick={send} disabled={!text.trim()} style={{ ...circBtn('var(--accent)', 'var(--bg)'), opacity: text.trim() ? 1 : 0.3 }}><IconSend size={16} /></button>
+              <button onClick={send} disabled={!text.trim()} style={{ ...circBtn('var(--accent)', 'var(--bg)'), opacity: text.trim() ? 1 : 0.3 }}><IconPaperPlane size={16} /></button>
             </>
           )}
         </div>

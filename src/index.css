@@ -26,3 +26,41 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px;
 
 .search-dropdown { animation: slideDown 0.2s ease; }
 @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes scrollCredits { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* Hover shimmer effect */
+button { position: relative; overflow: hidden; }
+button::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: none;
+  pointer-events: none;
+}
+button:hover::after {
+  animation: shimmer 0.9s ease;
+}
+
+/* Dark shimmer for light/white buttons */
+button.light-btn::after {
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.12), transparent);
+}
+button.light-btn:hover::after {
+  animation: shimmer 0.9s ease;
+}
+
+@keyframes shimmer { 
+  from { left: -120%; } 
+  to { left: 120%; } 
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  body { font-size: 14px; }
+}
+
+@media (min-width: 1920px) {
+  body { font-size: 16px; }
+}
