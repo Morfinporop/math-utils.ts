@@ -117,7 +117,18 @@ function App() {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Compress image to max 150x150 for avatar, 400x150 for banner
+    // Reject GIF files
+    if (file.type === 'image/gif') {
+      alert('GIF аватарки не поддерживаются. Используйте JPG или PNG.');
+      return;
+    }
+    
+    // Only allow images
+    if (!file.type.startsWith('image/')) {
+      alert('Только изображения (JPG, PNG)');
+      return;
+    }
+    
     const img = new Image();
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -318,8 +329,8 @@ function App() {
   // === PROFILE MODAL ===
   // Auto-save profile on close
   const closeProfile = () => {
-    store.updateProfile({ displayName: editName || profile?.displayName, description: editDesc, avatar: editAvatar, banner: editBanner, username: editUsername || profile?.username });
-    updateProfile({ name: editName, description: editDesc, avatar: editAvatar, banner: editBanner, username: editUsername });
+    store.updateProfile({ displayName: editName || profile?.displayName, description: editDesc, avatar: editAvatar, banner: editBanner });
+    updateProfile({ name: editName, description: editDesc, avatar: editAvatar, banner: editBanner });
     setShowProfile(false);
   };
 
@@ -345,10 +356,8 @@ function App() {
         <div style={{ padding: '8px 20px 20px' }}>
           <input type="text" value={editName} onChange={e => setEditName(e.target.value.slice(0, 16))} maxLength={16}
             style={{ fontSize: 18, fontWeight: 700, background: 'transparent', border: 'none', borderBottom: '1px dashed var(--border)', color: 'var(--text)', outline: 'none', width: '100%', padding: '4px 0' }} />
-          <div style={{ display: 'flex', alignItems: 'center', marginTop: 4, marginBottom: 12 }}>
-            <span style={{ color: 'var(--text3)', fontSize: 12 }}>@</span>
-            <input type="text" value={editUsername} onChange={e => setEditUsername(e.target.value.replace(/[^a-z0-9_]/gi, '').slice(0, 20))} maxLength={20}
-              style={{ fontSize: 12, background: 'transparent', border: 'none', borderBottom: '1px dashed var(--border)', color: 'var(--text2)', outline: 'none', width: '100%', padding: '2px 0' }} />
+          <div style={{ display: 'flex', alignItems: 'center', marginTop: 8, marginBottom: 12 }}>
+            <span style={{ color: 'var(--text3)', fontSize: 11 }}>@{profile?.username || editUsername}</span>
           </div>
           <textarea value={editDesc} onChange={e => setEditDesc(e.target.value.slice(0, 200))} maxLength={200} placeholder={t('bio')}
             style={{ width: '100%', padding: '8px 0', borderRadius: 0, border: 'none', borderBottom: '1px dashed var(--border)', background: 'transparent', color: 'var(--text)', fontSize: 13, outline: 'none', resize: 'none', height: 50 }} />

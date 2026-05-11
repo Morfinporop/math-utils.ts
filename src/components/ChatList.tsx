@@ -1,8 +1,6 @@
 import type { Contact } from '../store';
 import { store } from '../store';
 import { IconRobot, IconUser } from '../icons';
-import { formatLastSeen } from '../utils/date-formatter';
-import { settingsStore } from '../settings-store';
 
 interface Props {
   contacts: Map<string, Contact>;
@@ -50,12 +48,8 @@ export function ChatList({ contacts, selectedChat, onSelectChat, msgCounts, onCo
                   </div>
                   {unread > 0 && !isSelected && <span style={{ fontSize: 10, background: 'var(--accent)', color: 'var(--bg)', padding: '2px 8px', borderRadius: 10, fontWeight: 600, flexShrink: 0 }}>{unread}</span>}
                 </div>
-                {!isSelected && preview ? (
+                {!isSelected && preview && (
                    <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{preview}</div>
-                ) : !isBot && (
-                   <div style={{ fontSize: 10, color: c.online ? '#4caf50' : 'var(--text3)', marginTop: 1 }}>
-                     {c.online ? (settingsStore.get().lang === 'ru' ? 'в сети' : 'online') : c.lastOnlineTime ? formatLastSeen(c.lastOnlineTime, settingsStore.get().lang) : ''}
-                   </div>
                 )}
               </div>
             </button>

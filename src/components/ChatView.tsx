@@ -105,22 +105,19 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
         </button>
       </div>
 
-      {/* Contact Profile Modal */}
-      {showContactProfile && (
+      {/* Contact Profile Modal - only for non-bot users */}
+      {!isBot && showContactProfile && (
         <div onClick={() => setShowContactProfile(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 400, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
-            <div style={{ height: 90, background: isBot ? 'linear-gradient(135deg, #111, #333)' : 'linear-gradient(135deg, #ddd, #bbb)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {isBot && <span style={{ color: '#fff', fontSize: 14, fontWeight: 800, letterSpacing: '0.1em' }}>Я КРУТАЯ ЧЕ ПОДЕЛАТЬ</span>}
-            </div>
+            <div style={{ height: 90, background: 'linear-gradient(135deg, #ddd, #bbb)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} />
             <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: -32, paddingLeft: 20 }}>
               <div style={{ width: 64, height: 64, borderRadius: '50%', border: '3px solid var(--bg)', background: 'var(--bg2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text2)', position: 'relative', zIndex: 1 }}>
-                {isBot ? <IconRobot size={28} /> : <IconUser size={28} />}
+                <IconUser size={28} />
               </div>
             </div>
             <div style={{ padding: '8px 20px 20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                 <span style={{ fontSize: 20, fontWeight: 700 }}>{contact.displayName}</span>
-                {hasVerified && <svg width="16" height="16" viewBox="0 0 24 24" fill="#3b82f6"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>}
               </div>
               {contact.description && <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 8, lineHeight: 1.5 }}>{contact.description}</div>}
               <button onClick={() => setShowContactProfile(false)} style={{ marginTop: 16, padding: '10px 20px', borderRadius: 8, background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13, cursor: 'pointer' }}>
