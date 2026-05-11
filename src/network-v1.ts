@@ -21,7 +21,7 @@ export function initNetwork(s: string, alias: string) {
         if (x.contacts) {
           for (const cid in x.contacts) {
             const c = x.contacts[cid];
-            store.addContact(cid, { displayName: c.displayName || cid, currentId: cid, publicKey: '', lastSeen: Date.now(), avatar: c.avatar || '', online: false });
+            store.addContact(cid, { displayName: c.displayName || cid, currentId: cid, publicKey: '', lastSeen: Date.now(), avatar: c.avatar || '', online: false, lastRead: c.lastRead });
           }
         }
         if (x.messages) {
@@ -64,9 +64,13 @@ export function initNetwork(s: string, alias: string) {
 export function sendNetMessage(t: string, p: string, y: 'text' | 'voice' = 'text') {
   if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x2, target: t, p, t: y }));
 }
+export function sendMarkRead(target: string) {
+  if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0xD, target }));
+}
 export function sendBlock(t: string) { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x5, target: t })); }
 export function sendUnblock(t: string) { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x6, target: t })); }
 export function sendClear(t: string) { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x7, target: t })); }
 export function updateProfile(p: any) { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x8, profile: p })); }
 export function panic() { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x9 })); }
+export function disconnect() { _ws?.close(); _ws = null; }
 export function sendAsAI(t: string, text: string) { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0xA, target: t, p: text })); }

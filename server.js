@@ -129,15 +129,19 @@ _f.register(async (i) => {
           SESSIONS.set(id, s);
           s.send(JSON.stringify({ op: 0x4, gid: id }));
           s.send(JSON.stringify({ op: 'LOAD', contacts: db.contacts[id] || {}, messages: db.messages[id] || {} }));
-          // Tell new user who is currently online
           SESSIONS.forEach((sock, sid) => {
             if (sid !== id) {
-              // Tell new user about existing online user
               s.send(JSON.stringify({ op: 'ONLINE', gid: sid }));
-              // Tell existing user about new user
               if (sock.readyState === 1) sock.send(JSON.stringify({ op: 'ONLINE', gid: id }));
             }
           });
+        }
+        
+        if (d.op === 0xD) { // MARK AS READ
+          if (db.contacts[s.gid] && db.contacts[s.gid][d.target]) {
+            db.contacts[s.gid][d.target].lastRead = Date.now();
+            saveDB();
+          }
         }
 
         if (d.op === 0x2) { // SEND MESSAGE

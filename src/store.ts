@@ -13,13 +13,14 @@ export interface Contact {
   publicKey: string;
   lastSeen: number;
   blocked?: boolean;
-  blockedByMe?: boolean; // I blocked them
-  blockedByThem?: boolean; // They blocked me
+  blockedByMe?: boolean;
+  blockedByThem?: boolean;
   description?: string;
   avatar?: string;
   online?: boolean;
   lastOnlineTime?: number;
   muted?: boolean;
+  lastRead?: number;
 }
 
 export interface UserProfile {
@@ -71,17 +72,19 @@ class EphemeralStore {
   getLastMessage(cid: string) { const a = this._m.get(cid); return a?.[a.length - 1]; }
   
   markRead(cid: string) {
-    const msgs = this._m.get(cid) || [];
-    const myId = this._p?.currentId;
-    this._read.set(cid, msgs.filter(m => m.from !== myId).length);
+    const contact = this._c.get(cid);
+    if (contact) {
+      contact.lastRead = Date.now();
+      this._emit();
+    }
   }
 
   getUnreadCount(cid: string) {
     const msgs = this._m.get(cid) || [];
     const myId = this._p?.currentId;
-    const total = msgs.filter(m => m.from !== myId).length;
-    const read = this._read.get(cid) || 0;
-    return Math.max(0, total - read);
+    const contact = this._c.get(cid);
+    const lastRead = contact?.lastRead || 0;
+    return msgs.filter(m => m.from !== myId && m.timestamp > lastRead).length;
   }
 
   clearMessages(cid: string) { this._m.delete(cid); this._emit(); }

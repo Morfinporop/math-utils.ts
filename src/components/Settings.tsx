@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { settingsStore, VOICE_PRESETS, type VoicePreset } from '../settings-store';
-import { IconX } from '../icons';
+import { settingsStore } from '../settings-store';
+import { IconX, IconLogout } from '../icons';
 
 interface Props { onClose: () => void; onLogout: () => void; }
 
@@ -10,7 +10,7 @@ export function Settings({ onClose, onLogout }: Props) {
   useEffect(() => { const u = settingsStore.subscribe(() => setS(settingsStore.get())); return () => { u(); }; }, []);
 
   const btn = (label: string, active: boolean, onClick: () => void) => (
-    <button onClick={onClick} style={{ flex: 1, padding: 12, borderRadius: 8, fontSize: 13, fontWeight: active ? 700 : 400, border: 'none', cursor: 'pointer', background: active ? 'var(--accent)' : 'var(--bg3)', color: active ? 'var(--bg)' : 'var(--text)' }}>{label}</button>
+    <button onClick={onClick} style={{ flex: 1, padding: 12, borderRadius: 8, fontSize: 13, fontWeight: active ? 700 : 400, border: 'none', cursor: 'pointer', transition: 'all 0.2s', background: active ? 'var(--accent)' : 'var(--bg3)', color: active ? 'var(--bg)' : 'var(--text)' }}>{label}</button>
   );
 
   return (
@@ -18,7 +18,14 @@ export function Settings({ onClose, onLogout }: Props) {
       <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 16, padding: 24, maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <h2 style={{ fontSize: 20, fontWeight: 700 }}>{t('settings')}</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)' }}><IconX size={22} /></button>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <button onClick={onLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: 4 }} title={t('logout')}>
+              <IconLogout size={22} />
+            </button>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: 4 }}>
+              <IconX size={22} />
+            </button>
+          </div>
         </div>
 
         {/* Lang */}
@@ -30,25 +37,21 @@ export function Settings({ onClose, onLogout }: Props) {
           </div>
         </div>
 
-        {/* Voice Presets */}
-        <div style={{ marginBottom: 20, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-          <label style={{ fontSize: 12, color: 'var(--text2)', display: 'block', marginBottom: 12 }}>{t('voicePreset')}</label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-            {(Object.entries(VOICE_PRESETS) as [VoicePreset, typeof VOICE_PRESETS.normal][]).map(([key, preset]) => (
-              <button key={key} onClick={() => settingsStore.setVoicePreset(key)} style={{
-                padding: '12px 8px', borderRadius: 10, fontSize: 12, border: 'none', cursor: 'pointer',
-                background: s.voicePreset === key ? 'var(--accent)' : 'var(--bg3)',
-                color: s.voicePreset === key ? 'var(--bg)' : 'var(--text)',
-                fontWeight: s.voicePreset === key ? 700 : 400
-              }}>
-                {s.lang === 'ru' ? preset.label_ru : preset.label_en}
-              </button>
-            ))}
+        {/* Translation Toggle */}
+        <div style={{ marginBottom: 24, padding: '16px 0', borderTop: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 14, color: 'var(--text)' }}>{t('translate')}</span>
+            <button 
+              onClick={() => settingsStore.setTranslate(!s.translate)}
+              style={{ width: 44, height: 24, borderRadius: 20, background: s.translate ? 'var(--accent)' : 'var(--bg3)', border: 'none', cursor: 'pointer', position: 'relative', transition: 'all 0.2s' }}
+            >
+              <div style={{ position: 'absolute', top: 3, left: s.translate ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: s.translate ? 'var(--bg)' : 'var(--text2)', transition: 'all 0.2s' }} />
+            </button>
           </div>
         </div>
 
         {/* Danger Zone */}
-        <div style={{ padding: 16, border: '2px solid var(--danger)', borderRadius: 12, marginTop: 20 }}>
+        <div style={{ padding: 16, border: '2px solid var(--danger)', borderRadius: 12 }}>
           <div style={{ fontSize: 12, color: 'var(--danger)', fontWeight: 700, marginBottom: 12 }}>{t('dangerZone')}</div>
           <button onClick={() => { if (confirm('?')) onLogout(); }} style={{ width: '100%', padding: 12, borderRadius: 8, border: 'none', background: 'var(--danger)', color: '#fff', fontSize: 13, cursor: 'pointer' }}>{t('deleteAccount')}</button>
         </div>

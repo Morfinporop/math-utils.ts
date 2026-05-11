@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import type { Message, Contact } from '../store';
 import { settingsStore } from '../settings-store';
 import { IconMic, IconTrash, IconRobot, IconUser, IconX, IconPaperPlane } from '../icons';
+import { formatLastSeen } from '../utils/date-formatter';
 
 interface Props {
   contact: Contact;
@@ -85,11 +86,11 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
             </div>
             {!isBot && <div style={{ fontSize: 10, color: blocked ? 'var(--danger)' : contact.online ? '#4caf50' : 'var(--text3)' }}>
               {blocked 
-                ? (settingsStore.get().lang === 'ru' ? 'заблокирован' : 'blocked')
+                ? (settingsStore.get().lang === 'ru' ? 'был давно' : 'last seen long ago')
                 : contact.online 
                   ? (settingsStore.get().lang === 'ru' ? 'в сети' : 'online')
                   : contact.lastOnlineTime 
-                    ? `${settingsStore.get().lang === 'ru' ? 'был' : 'last seen'} ${new Date(contact.lastOnlineTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                    ? formatLastSeen(contact.lastOnlineTime, settingsStore.get().lang)
                     : (settingsStore.get().lang === 'ru' ? 'не в сети' : 'offline')
               }
             </div>}

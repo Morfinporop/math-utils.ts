@@ -7,7 +7,7 @@ import { store, panicDestroy } from './store';
 import { useStore } from './useStore';
 import { settingsStore } from './settings-store';
 import { _0xdead } from './core-v1';
-import { initNetwork, sendNetMessage, sendBlock, sendUnblock, sendClear, sendAsAI, updateProfile, panic } from './network-v1';
+import { initNetwork, sendNetMessage, sendBlock, sendUnblock, sendClear, sendAsAI, updateProfile, panic, sendMarkRead } from './network-v1';
 import { askAnoAI } from './ai-service';
 import { IconSettings, IconUser, IconSearch, IconLogout } from './icons';
 
@@ -92,7 +92,12 @@ function App() {
 
   // Auth is now handled by doAuth()
 
-  const handleLogout = () => { try { localStorage.removeItem('llb_auth'); } catch {} panicDestroy(); setScreen('login'); setName(''); setPassword(''); setEmail(''); setAdminMode(false); };
+  const handleLogout = () => { 
+    try { localStorage.removeItem('llb_auth'); } catch {} 
+    import('./network-v1').then(m => m.disconnect());
+    panicDestroy(); 
+    setScreen('login'); setName(''); setPassword(''); setEmail(''); setAdminMode(false); 
+  };
 
   const handlePanic = () => { panic(); panicDestroy(); window.location.reload(); };
 
@@ -160,6 +165,7 @@ function App() {
     if (contacts.has(id)) {
       setSelectedChat(id);
       store.markRead(id);
+      sendMarkRead(id);
     }
   };
 
