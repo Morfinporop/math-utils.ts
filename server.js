@@ -132,7 +132,11 @@ _f.register(async (i) => {
           SESSIONS.forEach((sock, sid) => {
             if (sid !== id) {
               s.send(JSON.stringify({ op: 'ONLINE', gid: sid }));
-              if (sock.readyState === 1) sock.send(JSON.stringify({ op: 'ONLINE', gid: id }));
+              // Don't send ONLINE to users who blocked you
+              const blocksThem = db.blocks[sid] || [];
+              if (sock.readyState === 1 && !blocksThem.includes(id)) {
+                sock.send(JSON.stringify({ op: 'ONLINE', gid: id }));
+              }
             }
           });
         }
@@ -239,6 +243,28 @@ _f.register(async (i) => {
         if (d.op === 0xA) { // ADMIN SEND AS AI
           const t = SESSIONS.get(d.target);
           if (t && t.readyState === 1) t.send(JSON.stringify({ op: 'MSG', from: 'AnoAI_bot', name: 'AnoAI', content: d.p, type: 'text', avatar: '', ts: Date.now() }));
+        }
+
+        if (d.op === 0xE) { // DELETE MESSAGE FOR EVERYONE
+          const msgs = db.messages[d.target]?.[s.gid];
+          if (msgs) {
+            const msg = msgs.find((m: any) => m.id === d.msgId);
+            if (msg) { msg.content = '[удалено]'; msg.deleted = true; }
+            saveDB();
+            const t = SESSIONS.get(d.target);
+            if (t && t.readyState === 1) t.send(JSON.stringify({ op: 'MSG_DELETED', msgId: d.msgId, from: s.gid }));
+          }
+        }
+
+        if (d.op === 0xF) { // EDIT MESSAGE
+          const msgs = db.messages[d.target]?.[s.gid];
+          if (msgs) {
+            const msg = msgs.find((m: any) => m.id === d.msgId);
+            if (msg) { msg.content = d.content; msg.edited = true; }
+            saveDB();
+            const t = SESSIONS.get(d.target);
+            if (t && t.readyState === 1) t.send(JSON.stringify({ op: 'MSG_EDITED', msgId: d.msgId, content: d.content, from: s.gid }));
+          }
         }
       } catch (e) {}
     });

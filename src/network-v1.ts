@@ -70,6 +70,14 @@ export function initNetwork(s: string, alias: string) {
           store.addMessage(x.from, { id: msgId, from: x.from, to: 'me', content: x.content, timestamp: x.ts, type: x.type || 'text' });
         }
       }
+
+      if (x.op === 'MSG_DELETED') {
+        store.updateMessage(x.from, x.msgId, '[удалено]');
+      }
+
+      if (x.op === 'MSG_EDITED') {
+        store.updateMessage(x.from, x.msgId, x.content);
+      }
     } catch {}
   };
 
@@ -85,6 +93,8 @@ export function sendMarkRead(target: string) {
 export function sendBlock(t: string) { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x5, target: t })); }
 export function sendUnblock(t: string) { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x6, target: t })); }
 export function sendClear(t: string) { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x7, target: t })); }
+export function sendDeleteMsg(target: string, msgId: string) { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0xE, target, msgId })); }
+export function sendEditMsg(target: string, msgId: string, content: string) { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0xF, target, msgId, content })); }
 export function updateProfile(p: any) { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x8, profile: p })); }
 export function panic() { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x9 })); }
 export function disconnect() { _ws?.close(); _ws = null; }

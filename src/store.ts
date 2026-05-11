@@ -5,6 +5,7 @@ export interface Message {
   content: string;
   timestamp: number;
   type: 'text' | 'voice';
+  edited?: boolean;
 }
 
 export interface Contact {
@@ -99,8 +100,7 @@ class EphemeralStore {
   isAdmin() { return this._isAdmin; }
 
   destroy() { 
-    this._m.clear(); 
-    this._c.clear(); 
+    // Only clear profile and admin status, preserve messages and contacts
     this._p = null; 
     this._isAdmin = false; 
     this._emit(); 

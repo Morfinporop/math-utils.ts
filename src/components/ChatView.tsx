@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Message, Contact } from '../store';
 import { settingsStore } from '../settings-store';
+import { store } from '../store';
 import { IconMic, IconTrash, IconRobot, IconUser, IconX, IconPaperPlane } from '../icons';
 import { formatLastSeen } from '../utils/date-formatter';
 import { translateText } from '../utils/translate';
@@ -34,6 +35,8 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
   const blockedByThem = contact.blockedByThem || false;
   const [showContactProfile, setShowContactProfile] = useState(false);
   const [translated, setTranslated] = useState<Record<string, string>>({});
+  const [msgMenu, setMsgMenu] = useState<{id: string, x: number, y: number} | null>(null);
+  const [editMsg, setEditMsg] = useState<{id: string, content: string} | null>(null);
   const hasVerified = contactId === 'AnoAI_bot' || contact.displayName === 'LLB';
   const translate = settingsStore.get().translate;
 
@@ -79,7 +82,7 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg)' }}>
       <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <button onClick={() => { if (onViewProfile) onViewProfile(); else setShowContactProfile(!showContactProfile); }} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text)', padding: 0 }}>
+        <button onClick={() => { if (!isBot && onViewProfile) onViewProfile(); else if (!isBot) setShowContactProfile(!showContactProfile); }} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'none', border: 'none', cursor: !isBot ? 'pointer' : 'default', color: 'var(--text)', padding: 0 }}>
           <div style={{ ...av, overflow: 'hidden' }}>
             {isBot ? <IconRobot size={18} /> : contact.avatar ? <img src={contact.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <IconUser size={18} />}
           </div>
@@ -141,9 +144,13 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
           }
           
           return (
-            <div key={msg.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
-              <div style={{ maxWidth: '75%', padding: '10px 14px', fontSize: 14, lineHeight: 1.5, borderRadius: mine ? '18px 18px 4px 18px' : '18px 18px 18px 4px', background: mine ? 'var(--accent)' : 'var(--bg2)', color: mine ? 'var(--bg)' : 'var(--text)', border: mine ? 'none' : '1px solid var(--border)' }}>
-                {msg.type === 'voice' ? <audio controls src={msg.content} style={{ height: 32, maxWidth: 200 }} /> : <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{content}</div>}
+            <div 
+              key={msg.id} 
+              onContextMenu={(e) => { e.preventDefault(); setMsgMenu({ id: msg.id, x: e.clientX, y: e.clientY }); }}
+              style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}
+            >
+              <div style={{ maxWidth: '75%', padding: '10px 14px', fontSize: 14, lineHeight: 1.5, borderRadius: mine ? '18px 18px 4px 18px' : '18px 18px 18px 4px', background: mine ? 'var(--accent)' : 'var(--bg2)', color: mine ? 'var(--bg)' : 'var(--text)', border: mine ? 'none' : '1px solid var(--border)', position: 'relative' }}>
+                {msg.type === 'voice' ? <audio controls src={msg.content} style={{ height: 32, maxWidth: 200 }} /> : <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{content}{msg.edited && <span style={{ fontSize: 9, opacity: 0.5, marginLeft: 4 }}>(изм.)</span>}</div>}
                 <div style={{ fontSize: 9, opacity: 0.5, marginTop: 4, textAlign: mine ? 'right' : 'left' }}>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
               </div>
             </div>
@@ -171,6 +178,84 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
             </>
           )}
         </div>
+
+        {/* Message Context Menu */}
+        {msgMenu && (
+          <div 
+            onClick={() => setMsgMenu(null)} 
+            style={{ position: 'fixed', inset: 0, zIndex: 2000 }}
+          >
+            <div 
+              onClick={e => e.stopPropagation()}
+              style={{ 
+                position: 'fixed', 
+                left: msgMenu.x, 
+                top: msgMenu.y, 
+                background: 'var(--bg)', 
+                border: '1px solid var(--border)', 
+                borderRadius: 8, 
+                padding: 4,
+                minWidth: 140,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+              }}
+            >
+              <button 
+                onClick={() => { 
+                  const msg = messages.find(m => m.id === msgMenu.id);
+                  if (msg && msg.from === myId) {
+                    setEditMsg({ id: msg.id, content: msg.content });
+                  }
+                  setMsgMenu(null);
+                }}
+                disabled={!messages.find(m => m.id === msgMenu.id)?.from || messages.find(m => m.id === msgMenu.id)?.from !== myId}
+                style={{ width: '100%', padding: '8px 12px', textAlign: 'left', fontSize: 12, background: 'none', border: 'none', cursor: 'pointer', color: messages.find(m => m.id === msgMenu.id)?.from === myId ? 'var(--text)' : 'var(--text3)', borderRadius: 4 }}
+              >
+                Изменить
+              </button>
+              <button 
+                onClick={() => { 
+                  // Delete for me
+                  store.updateMessage(contactId, msgMenu.id, '[удалено]');
+                  setMsgMenu(null);
+                }}
+                style={{ width: '100%', padding: '8px 12px', textAlign: 'left', fontSize: 12, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', borderRadius: 4 }}
+              >
+                Удалить у меня
+              </button>
+              <button 
+                onClick={() => { 
+                  // Delete for everyone - send to server
+                  import('../network-v1').then(m => m.sendDeleteMsg(contactId, msgMenu.id));
+                  store.updateMessage(contactId, msgMenu.id, '[удалено]');
+                  setMsgMenu(null);
+                }}
+                style={{ width: '100%', padding: '8px 12px', textAlign: 'left', fontSize: 12, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', borderRadius: 4 }}
+              >
+                Удалить у всех
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Message Modal */}
+        {editMsg && (
+          <div onClick={() => setEditMsg(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 400, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+              <textarea 
+                value={editMsg.content} 
+                onChange={e => setEditMsg({ ...editMsg, content: e.target.value })}
+                style={{ width: '100%', minHeight: 100, padding: 12, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text)', fontSize: 14, outline: 'none', resize: 'vertical' }}
+              />
+              <div style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'flex-end' }}>
+                <button onClick={() => setEditMsg(null)} style={{ padding: '8px 16px', borderRadius: 6, background: 'var(--bg3)', border: 'none', cursor: 'pointer', color: 'var(--text)' }}>Отмена</button>
+                <button onClick={() => { 
+                  import('../network-v1').then(m => m.sendEditMsg(contactId, editMsg.id, editMsg.content));
+                  setEditMsg(null);
+                }} style={{ padding: '8px 16px', borderRadius: 6, background: 'var(--accent)', border: 'none', cursor: 'pointer', color: 'var(--bg)' }}>Сохранить</button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }

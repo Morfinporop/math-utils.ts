@@ -94,8 +94,13 @@ function App() {
 
   const handleLogout = () => { 
     try { localStorage.removeItem('llb_auth'); } catch {} 
-    import('./network-v1').then(m => m.disconnect());
-    panicDestroy(); 
+    import('./network-v1').then(m => {
+      m.disconnect();
+      m.panic();
+    });
+    // Clear profile only, preserve messages
+    const p = store.getProfile();
+    if (p) store.setProfile({ ...p, currentId: '', displayName: '' });
     setScreen('login'); setName(''); setPassword(''); setEmail(''); setAdminMode(false); 
   };
 
