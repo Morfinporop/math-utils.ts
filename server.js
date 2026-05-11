@@ -248,7 +248,7 @@ _f.register(async (i) => {
         if (d.op === 0xE) { // DELETE MESSAGE FOR EVERYONE
           const msgs = db.messages[d.target]?.[s.gid];
           if (msgs) {
-            const msg = msgs.find((m: any) => m.id === d.msgId);
+            const msg = msgs.find(m => m.id === d.msgId);
             if (msg) { msg.content = '[удалено]'; msg.deleted = true; }
             saveDB();
             const t = SESSIONS.get(d.target);
@@ -259,7 +259,7 @@ _f.register(async (i) => {
         if (d.op === 0xF) { // EDIT MESSAGE
           const msgs = db.messages[d.target]?.[s.gid];
           if (msgs) {
-            const msg = msgs.find((m: any) => m.id === d.msgId);
+            const msg = msgs.find(m => m.id === d.msgId);
             if (msg) { msg.content = d.content; msg.edited = true; }
             saveDB();
             const t = SESSIONS.get(d.target);
