@@ -3,6 +3,7 @@ import type { Message, Contact } from '../store';
 import { settingsStore } from '../settings-store';
 import { IconMic, IconTrash, IconRobot, IconUser, IconX, IconPaperPlane } from '../icons';
 import { formatLastSeen } from '../utils/date-formatter';
+import { translateText } from '../utils/translate';
 
 interface Props {
   contact: Contact;
@@ -29,12 +30,15 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
   const timerRef = useRef<any>(null);
   const t = (key: any) => settingsStore.t(key);
   const isBot = contactId === 'AnoAI_bot';
-  const blocked = contact.blockedByMe || contact.blockedByThem;
+  const blockedByMe = contact.blockedByMe || false;
+  const blockedByThem = contact.blockedByThem || false;
   const [showContactProfile, setShowContactProfile] = useState(false);
+  const [translated, setTranslated] = useState<Record<string, string>>({});
   const hasVerified = contactId === 'AnoAI_bot' || contact.displayName === 'LLB';
+  const translate = settingsStore.get().translate;
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
-  const send = () => { const v = text.trim(); if (v && !blocked) { onSendMessage(v); setText(''); } };
+  const send = () => { const v = text.trim(); if (v && !blockedByMe) { onSendMessage(v); setText(''); } };
 
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -84,8 +88,8 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
               <span style={{ fontSize: 15, fontWeight: 600 }}>{contact.displayName}</span>
               {hasVerified && <svg width="14" height="14" viewBox="0 0 24 24" fill="#3b82f6"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>}
             </div>
-            {!isBot && <div style={{ fontSize: 10, color: blocked ? 'var(--danger)' : contact.online ? '#4caf50' : 'var(--text3)' }}>
-              {blocked 
+            {!isBot && <div style={{ fontSize: 10, color: (blockedByMe || blockedByThem) ? 'var(--danger)' : contact.online ? '#4caf50' : 'var(--text3)' }}>
+              {(blockedByMe || blockedByThem)
                 ? (settingsStore.get().lang === 'ru' ? 'был давно' : 'last seen long ago')
                 : contact.online 
                   ? (settingsStore.get().lang === 'ru' ? 'в сети' : 'online')
@@ -132,10 +136,17 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', fontSize: 13 }}>{t('noMessages')}</div>
         ) : messages.map(msg => {
           const mine = msg.from === myId;
+          const needsTranslation = translate && !mine && msg.type === 'text' && !isBot;
+          const content = needsTranslation ? (translated[msg.id] || `[EN] ${msg.content}`) : msg.content;
+          
+          if (needsTranslation && !translated[msg.id]) {
+            translateText(msg.content, 'en').then(t => setTranslated(prev => ({ ...prev, [msg.id]: t })));
+          }
+          
           return (
             <div key={msg.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
               <div style={{ maxWidth: '75%', padding: '10px 14px', fontSize: 14, lineHeight: 1.5, borderRadius: mine ? '18px 18px 4px 18px' : '18px 18px 18px 4px', background: mine ? 'var(--accent)' : 'var(--bg2)', color: mine ? 'var(--bg)' : 'var(--text)', border: mine ? 'none' : '1px solid var(--border)' }}>
-                {msg.type === 'voice' ? <audio controls src={msg.content} style={{ height: 32, maxWidth: 200 }} /> : <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.content}</div>}
+                {msg.type === 'voice' ? <audio controls src={msg.content} style={{ height: 32, maxWidth: 200 }} /> : <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{content}</div>}
                 <div style={{ fontSize: 9, opacity: 0.5, marginTop: 4, textAlign: mine ? 'right' : 'left' }}>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
               </div>
             </div>
@@ -144,12 +155,7 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
         <div ref={endRef} />
       </div>
 
-      {blocked ? (
-        <div style={{ padding: 16, textAlign: 'center', color: 'var(--text3)', fontSize: 13, borderTop: '1px solid var(--border)' }}>
-          {settingsStore.get().lang === 'ru' ? 'Пользователь заблокирован' : 'User is blocked'}
-        </div>
-      ) : (
-        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
           {isRec ? (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10 }}>
               <button onClick={cancelRec} style={{ ...circBtn('#ff4444', '#fff'), width: 40, height: 40 }}><IconX size={18} /></button>
@@ -168,7 +174,6 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
             </>
           )}
         </div>
-      )}
     </div>
   );
 }

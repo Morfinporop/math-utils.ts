@@ -9,7 +9,7 @@ import { settingsStore } from './settings-store';
 import { _0xdead } from './core-v1';
 import { initNetwork, sendNetMessage, sendBlock, sendUnblock, sendClear, sendAsAI, updateProfile, panic, sendMarkRead } from './network-v1';
 import { askAnoAI } from './ai-service';
-import { IconSettings, IconUser, IconSearch, IconLogout } from './icons';
+import { IconSettings, IconUser, IconSearch } from './icons';
 
 function App() {
   const { profile, contacts, getMessages, addMessage, removeContact, getUnreadCount, isAdmin } = useStore();
@@ -469,22 +469,18 @@ function App() {
       <div style={{ width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border)', height: '100%' }}>
         <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img src="https://www.freeiconspng.com/uploads/black-facebook-messenger-logo-29.png" style={{ width: 24, height: 24 }} />
-            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>LLB</span>
-            <span style={{ fontSize: 11, color: 'var(--text3)' }}>Мессенджер</span>
+            <img src="https://www.freeiconspng.com/uploads/black-facebook-messenger-logo-29.png" style={{ width: 28, height: 28 }} />
+            <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>LLB</span>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <button className="light-btn" onClick={openProfile} style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              {profile.avatar ? <img src={profile.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <IconUser size={18} />}
+            <button className="light-btn" onClick={openProfile} style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {profile.avatar ? <img src={profile.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <IconUser size={20} />}
             </button>
-            <button className="light-btn" onClick={() => setShowSearch(v => !v)} style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconSearch size={17} />
+            <button className="light-btn" onClick={() => setShowSearch(v => !v)} style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconSearch size={20} />
             </button>
-            <button className="light-btn gear-btn" onClick={() => setShowSettings(true)} style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconSettings size={17} />
-            </button>
-            <button onClick={handleLogout} style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconLogout size={17} />
+            <button className="light-btn gear-btn" onClick={() => setShowSettings(true)} style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--bg2)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--text2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconSettings size={20} />
             </button>
           </div>
         </div>

@@ -1,5 +1,4 @@
 export type Lang = 'ru' | 'en';
-export type VoicePreset = 'normal' | 'deep' | 'child' | 'moriarty' | 'robot' | 'whisper';
 
 export interface Settings { lang: Lang; translate: boolean; }
 

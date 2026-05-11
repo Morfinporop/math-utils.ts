@@ -21,13 +21,23 @@ export function initNetwork(s: string, alias: string) {
         if (x.contacts) {
           for (const cid in x.contacts) {
             const c = x.contacts[cid];
-            store.addContact(cid, { displayName: c.displayName || cid, currentId: cid, publicKey: '', lastSeen: Date.now(), avatar: c.avatar || '', online: false, lastRead: c.lastRead });
+            if (!store.getContact(cid)) {
+              store.addContact(cid, { displayName: c.displayName || cid, currentId: cid, publicKey: '', lastSeen: Date.now(), avatar: c.avatar || '', online: false, lastRead: c.lastRead });
+            }
           }
         }
         if (x.messages) {
           for (const cid in x.messages) {
             const msgs = x.messages[cid];
-            if (Array.isArray(msgs)) msgs.forEach((m: any) => store.addMessage(cid, { id: m.id, from: m.from, to: m.to, content: m.content, timestamp: m.timestamp, type: m.type || 'text' }));
+            const existingMsgs = store.getMessages(cid);
+            const existingIds = new Set(existingMsgs.map(m => m.id));
+            if (Array.isArray(msgs)) {
+              msgs.forEach((m: any) => {
+                if (!existingIds.has(m.id)) {
+                  store.addMessage(cid, { id: m.id, from: m.from, to: m.to, content: m.content, timestamp: m.timestamp, type: m.type || 'text' });
+                }
+              });
+            }
           }
         }
       }
@@ -48,12 +58,17 @@ export function initNetwork(s: string, alias: string) {
       if (x.op === 'WIPE') { store.removeContact(x.target); }
 
       if (x.op === 'MSG') {
-        if (!store.getContact(x.from)) {
-          store.addContact(x.from, { displayName: x.name, currentId: x.from, publicKey: '', lastSeen: Date.now(), online: true, avatar: x.avatar || '' });
-        } else {
-          store.updateContact(x.from, { online: true, lastSeen: x.ts });
+        const msgId = x.id || crypto.randomUUID();
+        const existingMsgs = store.getMessages(x.from);
+        const exists = existingMsgs.some(m => m.id === msgId);
+        if (!exists) {
+          if (!store.getContact(x.from)) {
+            store.addContact(x.from, { displayName: x.name, currentId: x.from, publicKey: '', lastSeen: Date.now(), online: true, avatar: x.avatar || '' });
+          } else {
+            store.updateContact(x.from, { online: true, lastSeen: x.ts });
+          }
+          store.addMessage(x.from, { id: msgId, from: x.from, to: 'me', content: x.content, timestamp: x.ts, type: x.type || 'text' });
         }
-        store.addMessage(x.from, { id: crypto.randomUUID(), from: x.from, to: 'me', content: x.content, timestamp: x.ts, type: x.type || 'text' });
       }
     } catch {}
   };

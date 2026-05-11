@@ -45,10 +45,15 @@ class EphemeralStore {
   private _p: UserProfile | null = null;
   private _l: Set<Listener> = new Set();
   private _isAdmin = false;
-  private _read: Map<string, number> = new Map(); // cid -> last read count
 
   constructor() {
-    this.addContact('AnoAI_bot', { displayName: 'AnoAI', currentId: 'AnoAI_bot', publicKey: '', lastSeen: Date.now(), description: 'AnoAI — AI ассистент LLB мессенджера', online: true });
+    this._addAnoAI();
+  }
+
+  private _addAnoAI() {
+    if (!this._c.has('AnoAI_bot')) {
+      this.addContact('AnoAI_bot', { displayName: 'AnoAI', currentId: 'AnoAI_bot', publicKey: '', lastSeen: Date.now(), description: 'AnoAI — AI ассистент LLB мессенджера', online: true });
+    }
   }
 
   subscribe(fn: Listener) { this._l.add(fn); return () => { this._l.delete(fn); }; }
@@ -93,7 +98,14 @@ class EphemeralStore {
   setAdmin(v: boolean) { this._isAdmin = v; this._emit(); }
   isAdmin() { return this._isAdmin; }
 
-  destroy() { this._m.clear(); this._c.clear(); this._p = null; this._isAdmin = false; this._emit(); }
+  destroy() { 
+    this._m.clear(); 
+    this._c.clear(); 
+    this._p = null; 
+    this._isAdmin = false; 
+    this._emit(); 
+    this._addAnoAI();
+  }
 }
 
 export const store = new EphemeralStore();
