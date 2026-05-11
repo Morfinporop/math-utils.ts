@@ -45,12 +45,13 @@ function App() {
       const res = await fetch(`/api/profile/${r.gid}`);
       if (res.ok) {
         const p = await res.json();
-        store.addContact(r.gid, { displayName: p.name || r.name, currentId: r.gid, publicKey: '', lastSeen: Date.now(), description: p.description });
+        const onlineRes = await fetch(`/api/online/${r.gid}`).then(r2 => r2.json()).catch(() => ({ online: false }));
+        store.addContact(r.gid, { displayName: p.name || r.name, currentId: r.gid, publicKey: '', lastSeen: Date.now(), description: p.description, avatar: p.avatar || '', online: onlineRes.online });
       } else {
-        store.addContact(r.gid, { displayName: r.name, currentId: r.gid, publicKey: '', lastSeen: Date.now() });
+        store.addContact(r.gid, { displayName: r.name, currentId: r.gid, publicKey: '', lastSeen: Date.now(), avatar: r.avatar || '' });
       }
     } catch {
-      store.addContact(r.gid, { displayName: r.name, currentId: r.gid, publicKey: '', lastSeen: Date.now() });
+      store.addContact(r.gid, { displayName: r.name, currentId: r.gid, publicKey: '', lastSeen: Date.now(), avatar: r.avatar || '' });
     }
     setSearchQ(''); setSearchResults([]); setShowSearch(false);
     setSelectedChat(r.gid);

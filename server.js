@@ -106,6 +106,12 @@ _f.get('/api/search', async (req, reply) => {
   return results;
 });
 
+// ── ONLINE CHECK ────────────────────
+
+_f.get('/api/online/:gid', async (req, reply) => {
+  return { online: SESSIONS.has(req.params.gid) };
+});
+
 // ── WEBSOCKET ───────────────────────
 
 _f.register(async (i) => {
@@ -139,9 +145,12 @@ _f.register(async (i) => {
           const blocks = db.blocks[d.target] || [];
           if (blocks.includes(s.gid)) return;
           
-          // Limit text messages to 2000 chars
           let content = d.p;
-          if (d.t !== 'voice' && content.length > 2000) content = content.slice(0, 2000);
+          if (d.t !== 'voice') {
+            if (content.length > 2000) content = content.slice(0, 2000);
+            // Block spam characters
+            if (/(.)\1{10,}/.test(content) || /[^\w\sа-яёА-ЯЁ.,!?;:'"()\-@#$%&+=]{20,}/.test(content)) return;
+          }
 
           const msg = { id: crypto.randomBytes(4).toString('hex'), from: s.gid, to: d.target, content, timestamp: Date.now(), type: d.t || 'text' };
           

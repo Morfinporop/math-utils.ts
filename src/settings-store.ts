@@ -3,13 +3,13 @@ export type VoicePreset = 'normal' | 'deep' | 'child' | 'moriarty' | 'robot' | '
 
 export interface Settings { lang: Lang; voicePreset: VoicePreset; }
 
-export const VOICE_PRESETS: Record<VoicePreset, { pitch: number; clarity: number; label_ru: string; label_en: string }> = {
-  normal:   { pitch: 1.0,  clarity: 2000, label_ru: 'Обычный',   label_en: 'Normal' },
-  deep:     { pitch: 0.7,  clarity: 1200, label_ru: 'Грубый',    label_en: 'Deep' },
-  child:    { pitch: 1.4,  clarity: 3000, label_ru: 'Детский',   label_en: 'Child' },
-  moriarty: { pitch: 0.75, clarity: 1800, label_ru: 'Мориарти',  label_en: 'Moriarty' },
-  robot:    { pitch: 0.6,  clarity: 800,  label_ru: 'Робот',     label_en: 'Robot' },
-  whisper:  { pitch: 0.9,  clarity: 2500, label_ru: 'Шёпот',     label_en: 'Whisper' },
+export const VOICE_PRESETS: Record<VoicePreset, { pitch: number; clarity: number; bass: number; distortion: boolean; label_ru: string; label_en: string }> = {
+  normal:   { pitch: 1.0,  clarity: 2000, bass: 0,  distortion: false, label_ru: 'Обычный',   label_en: 'Normal' },
+  deep:     { pitch: 0.55, clarity: 900,  bass: 15, distortion: false, label_ru: 'Грубый',    label_en: 'Deep' },
+  child:    { pitch: 1.6,  clarity: 3500, bass: -5, distortion: false, label_ru: 'Детский',   label_en: 'Child' },
+  moriarty: { pitch: 0.65, clarity: 2200, bass: 12, distortion: true,  label_ru: 'Мориарти',  label_en: 'Moriarty' },
+  robot:    { pitch: 0.45, clarity: 600,  bass: 20, distortion: true,  label_ru: 'Робот',     label_en: 'Robot' },
+  whisper:  { pitch: 1.1,  clarity: 3000, bass: -8, distortion: false, label_ru: 'Шёпот',     label_en: 'Whisper' },
 };
 
 const TR = {
