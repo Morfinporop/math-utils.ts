@@ -21,21 +21,17 @@ export function initNetwork(s: string, alias: string) {
         if (x.contacts) {
           for (const cid in x.contacts) {
             const c = x.contacts[cid];
-            if (!store.getContact(cid)) {
-              store.addContact(cid, { displayName: c.displayName || cid, currentId: cid, publicKey: '', lastSeen: Date.now(), avatar: c.avatar || '', online: false, lastRead: c.lastRead });
-            }
+            const blockedByMe = (x.blocks || []).includes(cid);
+            const blockedByThem = (x.blockedBy || []).includes(cid);
+            store.addContact(cid, { displayName: c.displayName || cid, currentId: cid, publicKey: '', lastSeen: Date.now(), avatar: c.avatar || '', online: false, lastRead: c.lastRead, blockedByMe, blockedByThem });
           }
         }
         if (x.messages) {
           for (const cid in x.messages) {
             const msgs = x.messages[cid];
-            const existingMsgs = store.getMessages(cid);
-            const existingIds = new Set(existingMsgs.map(m => m.id));
             if (Array.isArray(msgs)) {
               msgs.forEach((m: any) => {
-                if (!existingIds.has(m.id)) {
-                  store.addMessage(cid, { id: m.id, from: m.from, to: m.to, content: m.content, timestamp: m.timestamp, type: m.type || 'text' });
-                }
+                store.addMessage(cid, { id: m.id, from: m.from, to: m.to, content: m.content, timestamp: m.timestamp, type: m.type || 'text', edited: m.edited });
               });
             }
           }
@@ -49,6 +45,7 @@ export function initNetwork(s: string, alias: string) {
       if (x.op === 'UNBLOCKED') store.updateContact(x.by, { blockedByThem: false });
 
       if (x.op === 'CLEARED') store.clearMessages(x.from);
+      if (x.op === 'CHAT_DELETED') { store.clearMessages(x.from); store.removeContact(x.from); }
 
       if (x.op === 'PROFILE') {
         const c = store.getContact(x.gid);
@@ -95,6 +92,7 @@ export function sendUnblock(t: string) { if (_ws?.readyState === WebSocket.OPEN)
 export function sendClear(t: string) { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x7, target: t })); }
 export function sendDeleteMsg(target: string, msgId: string) { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0xE, target, msgId })); }
 export function sendEditMsg(target: string, msgId: string, content: string) { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0xF, target, msgId, content })); }
+export function sendDeleteChat(target: string) { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0xC, target })); }
 export function updateProfile(p: any) { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x8, profile: p })); }
 export function panic() { if (_ws?.readyState === WebSocket.OPEN) _ws.send(JSON.stringify({ op: 0x9 })); }
 export function disconnect() { _ws?.close(); _ws = null; }

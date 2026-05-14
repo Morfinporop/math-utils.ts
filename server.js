@@ -128,7 +128,7 @@ _f.register(async (i) => {
           s.alias = d.a || 'U';
           SESSIONS.set(id, s);
           s.send(JSON.stringify({ op: 0x4, gid: id }));
-          s.send(JSON.stringify({ op: 'LOAD', contacts: db.contacts[id] || {}, messages: db.messages[id] || {} }));
+          s.send(JSON.stringify({ op: 'LOAD', contacts: db.contacts[id] || {}, messages: db.messages[id] || {}, blocks: db.blocks[id] || [], blockedBy: Object.entries(db.blocks).filter(([, v]) => v.includes(id)).map(([k]) => k) }));
           SESSIONS.forEach((sock, sid) => {
             if (sid !== id) {
               s.send(JSON.stringify({ op: 'ONLINE', gid: sid }));
@@ -150,8 +150,10 @@ _f.register(async (i) => {
 
         if (d.op === 0x2) { // SEND MESSAGE
           if (d.target === s.gid) return;
-          const blocks = db.blocks[d.target] || [];
-          if (blocks.includes(s.gid)) return;
+          // Check blocks both ways
+          const blocksTarget = db.blocks[d.target] || [];
+          const blocksSender = db.blocks[s.gid] || [];
+          if (blocksTarget.includes(s.gid) || blocksSender.includes(d.target)) return;
           
           let content = d.p;
           if (d.t !== 'voice') {
@@ -206,12 +208,22 @@ _f.register(async (i) => {
           if (t && t.readyState === 1) t.send(JSON.stringify({ op: 'UNBLOCKED', by: s.gid }));
         }
 
-        if (d.op === 0x7) { // CLEAR
+        if (d.op === 0x7) { // CLEAR MESSAGES ONLY
           if (db.messages[s.gid]) delete db.messages[s.gid][d.target];
           if (db.messages[d.target]) delete db.messages[d.target][s.gid];
           saveDB();
           const t = SESSIONS.get(d.target);
           if (t && t.readyState === 1) t.send(JSON.stringify({ op: 'CLEARED', from: s.gid }));
+        }
+        
+        if (d.op === 0xC) { // DELETE CHAT COMPLETELY
+          if (db.messages[s.gid]) delete db.messages[s.gid][d.target];
+          if (db.messages[d.target]) delete db.messages[d.target][s.gid];
+          if (db.contacts[s.gid]) delete db.contacts[s.gid][d.target];
+          if (db.contacts[d.target]) delete db.contacts[d.target][s.gid];
+          saveDB();
+          const t = SESSIONS.get(d.target);
+          if (t && t.readyState === 1) t.send(JSON.stringify({ op: 'CHAT_DELETED', from: s.gid }));
         }
 
         if (d.op === 0x8) { // UPDATE PROFILE

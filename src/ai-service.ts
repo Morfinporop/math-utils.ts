@@ -1,7 +1,11 @@
 const MODELS = [
-  'inclusionai/ring-2.6-1t:free',
-  'baidu/cobuddy:free',
-  'poolside/laguna-xs.2:free'
+  'google/gemma-3-27b-it:free',
+  'google/gemma-3-12b-it:free',
+  'qwen/qwen3-30b-a3b:free',
+  'qwen/qwen3-next-80b-a3b-instruct:free',
+  'meta-llama/llama-4-maverick:free',
+  'nvidia/nemotron-3-nano-30b-a3b:free',
+  'mistralai/mistral-small-3.1-24b-instruct:free'
 ];
 
 const getKey = (): string => {
@@ -14,9 +18,7 @@ const BAD = /насилие|убийство|torture|gore|rape|murder|нарко
 const SPAM = /(.)\1{10,}/;
 const chatHistory: { role: string; content: string }[] = [];
 
-export function clearAIHistory() { 
-  chatHistory.length = 0; 
-}
+export function clearAIHistory() { chatHistory.length = 0; }
 
 export async function askAnoAI(
   prompt: string,
@@ -24,29 +26,15 @@ export async function askAnoAI(
   onResult: (id: string, text: string) => void,
   thinkingId: string
 ): Promise<void> {
-
-  if (BAD.test(prompt)) { 
-    onResult(thinkingId, "[blocked]"); 
-    return; 
-  }
-
-  if (SPAM.test(prompt)) { 
-    onResult(thinkingId, "Спам"); 
-    return; 
-  }
+  if (BAD.test(prompt)) { onResult(thinkingId, "[blocked]"); return; }
+  if (SPAM.test(prompt)) { onResult(thinkingId, "Спам"); return; }
 
   chatHistory.push({ role: 'user', content: prompt });
-  if (chatHistory.length > 20) {
-    chatHistory.splice(0, chatHistory.length - 20);
-  }
+  if (chatHistory.length > 20) chatHistory.splice(0, chatHistory.length - 20);
 
   const key = getKey();
-
   const msgs = [
-    { 
-      role: 'system', 
-      content: 'Answer in the same language as the user. No emoji. No errors. Be concise, smart, helpful. Remember previous messages.' 
-    },
+    { role: 'system', content: 'Answer in the same language as the user. No emoji. No errors. Be concise, smart, helpful. Remember previous messages.' },
     ...chatHistory
   ];
 
@@ -54,31 +42,18 @@ export async function askAnoAI(
     try {
       const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${key}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': window.location.href
-        },
-        body: JSON.stringify({
-          model,
-          messages: msgs,
-          max_tokens: 512
-        })
+        headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json', 'HTTP-Referer': window.location.href },
+        body: JSON.stringify({ model, messages: msgs, max_tokens: 512 })
       });
-
       if (!res.ok) continue;
-
       const data = await res.json();
       const text = data?.choices?.[0]?.message?.content;
-
       if (text && text.length < 3000) {
         chatHistory.push({ role: 'assistant', content: text });
         onResult(thinkingId, text);
         return;
       }
-
     } catch {}
   }
-
   onResult(thinkingId, "Ошибка сети");
 }

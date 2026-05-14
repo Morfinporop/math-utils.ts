@@ -100,7 +100,8 @@ class EphemeralStore {
   isAdmin() { return this._isAdmin; }
 
   destroy() { 
-    // Only clear profile and admin status, preserve messages and contacts
+    this._m.clear();
+    this._c.clear();
     this._p = null; 
     this._isAdmin = false; 
     this._emit(); 

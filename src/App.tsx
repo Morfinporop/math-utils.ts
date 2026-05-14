@@ -94,13 +94,9 @@ function App() {
 
   const handleLogout = () => { 
     try { localStorage.removeItem('llb_auth'); } catch {} 
-    import('./network-v1').then(m => {
-      m.disconnect();
-      m.panic();
-    });
-    // Clear profile only, preserve messages
-    const p = store.getProfile();
-    if (p) store.setProfile({ ...p, currentId: '', displayName: '' });
+    import('./network-v1').then(m => m.disconnect());
+    store.destroy();
+    setSelectedChat(null);
     setScreen('login'); setName(''); setPassword(''); setEmail(''); setAdminMode(false); 
   };
 
@@ -387,7 +383,11 @@ function App() {
             else { store.blockContact(contextMenu.id); sendBlock(contextMenu.id); } 
           }
         }]),
-        { label: t('deleteChat'), action: () => { sendClear(contextMenu.id); removeContact(contextMenu.id); if (selectedChat === contextMenu.id) setSelectedChat(null); }, danger: true },
+        { label: t('deleteChat'), action: () => { 
+          import('./network-v1').then(m => m.sendDeleteChat(contextMenu.id));
+          removeContact(contextMenu.id); 
+          if (selectedChat === contextMenu.id) setSelectedChat(null); 
+        }, danger: true },
       ].map((item, i) => (
         <button key={i} onClick={() => { item.action(); setContextMenu(null); }}
           style={{ width: '100%', padding: '10px 14px', textAlign: 'left', fontSize: 13, color: (item as any).danger ? 'var(--danger)' : 'var(--text)', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 6, display: 'block' }}>
