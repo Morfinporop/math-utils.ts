@@ -10,7 +10,7 @@ const TR = {
     llbFull: 'Личная Локальная Безопасность', admin: 'Админ панель', users: 'Пользователи', noContacts: 'Нет контактов', 
     yourId: 'Ваш ID', copied: 'Скопировано', profile: 'Профиль', logout: 'Выйти', deleteAccount: 'Удалить аккаунт', 
     dangerZone: 'Опасная зона', features: 'Функции', save: 'Сохранить', bio: 'Описание', avatar: 'Аватарка', banner: 'Баннер',
-    translate: 'Перевести чат (EN)'
+    translate: 'Перевести чат'
   },
   en: { 
     settings: 'Settings', language: 'Language', close: 'Close', send: 'Send', typeMessage: 'Message...', 
@@ -19,7 +19,7 @@ const TR = {
     llbFull: 'Local Personal Security', admin: 'Admin Panel', users: 'Users', noContacts: 'No contacts', 
     yourId: 'Your ID', copied: 'Copied', profile: 'Profile', logout: 'Log out', deleteAccount: 'Delete account', 
     dangerZone: 'Danger zone', features: 'Features', save: 'Save', bio: 'Bio', avatar: 'Avatar', banner: 'Banner',
-    translate: 'Translate chat (EN)'
+    translate: 'Translate chat'
   }
 };
 

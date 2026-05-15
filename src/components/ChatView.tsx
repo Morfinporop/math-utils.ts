@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import type { Message, Contact } from '../store';
 import { settingsStore } from '../settings-store';
 import { store } from '../store';
-import { IconMic, IconTrash, IconRobot, IconUser, IconX, IconPaperPlane } from '../icons';
+import { IconMic, IconRobot, IconUser, IconX, IconPaperPlane } from '../icons';
 import { formatLastSeen } from '../utils/date-formatter';
 import { translateText } from '../utils/translate';
 
@@ -103,29 +103,37 @@ export function ChatView({ contact, contactId, messages, myId, onSendMessage, on
             </div>}
           </div>
         </button>
-        <button onClick={onDeleteChat} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px' }}>
-          {isBot ? <span style={{ fontSize: 12 }}>{t('clearChat')}</span> : <IconTrash size={16} />}
-        </button>
+        {isBot && (
+          <button onClick={onDeleteChat} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: 12, padding: '4px 8px' }}>
+            {t('clearChat')}
+          </button>
+        )}
       </div>
 
       {/* Contact Profile Modal - only for non-bot users */}
       {!isBot && showContactProfile && (
         <div onClick={() => setShowContactProfile(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 400, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
-            <div style={{ height: 90, background: 'linear-gradient(135deg, #ddd, #bbb)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} />
-            <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: -32, paddingLeft: 20 }}>
-              <div style={{ width: 64, height: 64, borderRadius: '50%', border: '3px solid var(--bg)', background: 'var(--bg2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text2)', position: 'relative', zIndex: 1 }}>
-                <IconUser size={28} />
+            <div style={{ height: 100, background: 'linear-gradient(135deg, #e8e8e8, #d0d0d0)', position: 'relative' }}>
+              <button 
+                onClick={() => setShowContactProfile(false)} 
+                style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', color: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}
+              >
+                <IconX size={18} />
+              </button>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: -36, paddingLeft: 24 }}>
+              <div style={{ width: 72, height: 72, borderRadius: '50%', border: '4px solid var(--bg)', background: 'var(--bg2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text2)', position: 'relative', zIndex: 1, overflow: 'hidden' }}>
+                {contact.avatar ? <img src={contact.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <IconUser size={32} />}
               </div>
             </div>
-            <div style={{ padding: '8px 20px 20px' }}>
+            <div style={{ padding: '16px 24px 24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                 <span style={{ fontSize: 20, fontWeight: 700 }}>{contact.displayName}</span>
+                {hasVerified && <svg width="18" height="18" viewBox="0 0 24 24" fill="#3b82f6"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>}
               </div>
-              {contact.description && <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 8, lineHeight: 1.5 }}>{contact.description}</div>}
-              <button onClick={() => setShowContactProfile(false)} style={{ marginTop: 16, padding: '10px 20px', borderRadius: 8, background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text)', fontSize: 13, cursor: 'pointer' }}>
-                {settingsStore.get().lang === 'ru' ? 'Закрыть' : 'Close'}
-              </button>
+              <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 12 }}>@{contactId.slice(0, 16)}</div>
+              {contact.description && <div style={{ fontSize: 14, color: 'var(--text2)', marginTop: 8, lineHeight: 1.6 }}>{contact.description}</div>}
             </div>
           </div>
         </div>

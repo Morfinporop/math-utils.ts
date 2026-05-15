@@ -1,6 +1,11 @@
 import { store } from './store';
 
 let _ws: WebSocket | null = null;
+let _activeChat: string | null = null;
+
+export function setActiveChat(id: string | null) {
+  _activeChat = id;
+}
 
 export function initNetwork(s: string, alias: string) {
   const p = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -65,6 +70,14 @@ export function initNetwork(s: string, alias: string) {
             store.updateContact(x.from, { online: true, lastSeen: x.ts });
           }
           store.addMessage(x.from, { id: msgId, from: x.from, to: 'me', content: x.content, timestamp: x.ts, type: x.type || 'text' });
+          
+          if (x.from !== _activeChat) {
+            try {
+              const audio = new Audio('/med/sound/pupum.mp3');
+              audio.volume = 0.5;
+              audio.play().catch(() => {});
+            } catch {}
+          }
         }
       }
 

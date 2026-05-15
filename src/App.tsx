@@ -7,7 +7,7 @@ import { store, panicDestroy } from './store';
 import { useStore } from './useStore';
 import { settingsStore } from './settings-store';
 import { _0xdead } from './core-v1';
-import { initNetwork, sendNetMessage, sendBlock, sendUnblock, sendClear, sendAsAI, updateProfile, panic, sendMarkRead } from './network-v1';
+import { initNetwork, sendNetMessage, sendBlock, sendUnblock, sendClear, sendAsAI, updateProfile, panic, sendMarkRead, setActiveChat } from './network-v1';
 import { askAnoAI } from './ai-service';
 import { IconSettings, IconUser, IconSearch } from './icons';
 
@@ -171,7 +171,6 @@ function App() {
     } else { sendNetMessage(chatId, text, 'text'); }
   };
 
-  // Fix: only select chat if contact actually exists
   const handleSelectChat = (id: string) => {
     if (id === profile?.currentId) return;
     if (contacts.has(id)) {
@@ -180,6 +179,17 @@ function App() {
       sendMarkRead(id);
     }
   };
+
+  useEffect(() => {
+    setActiveChat(selectedChat);
+  }, [selectedChat]);
+
+  // Auto mark as read when messages arrive while chat is open
+  useEffect(() => {
+    if (selectedChat) {
+      store.markRead(selectedChat);
+    }
+  });
 
   const [viewingProfile, setViewingProfile] = useState<string | null>(null);
   const [viewProfileData, setViewProfileData] = useState<any>(null);
@@ -215,7 +225,7 @@ function App() {
 
   // === LOGIN / REGISTER ===
   if (screen === 'login') {
-    const inp: React.CSSProperties = { width: '100%', padding: '16px 20px', borderRadius: 14, border: '1px solid #e0e0e0', background: '#f5f5f5', color: '#111', fontSize: 16, outline: 'none', transition: 'all 0.2s' };
+    const inp: React.CSSProperties = { width: '100%', padding: '16px 20px', borderRadius: 14, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text)', fontSize: 16, outline: 'none', transition: 'all 0.2s' };
     const isReg = authMode === 'register';
     const regStep1 = isReg && authStep === 0;
     const regStep2 = isReg && authStep === 1;
@@ -226,17 +236,25 @@ function App() {
     };
 
     return (
-      <div style={{ minHeight: '100vh', background: `url(https://abrakadabra.fun/uploads/posts/2021-12/1639858433_2-abrakadabra-fun-p-cherno-belii-fon-dlya-prezentatsii-2.jpg) center/cover`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', position: 'relative' }}>
+      <div style={{ 
+        minHeight: '100vh', 
+        background: `linear-gradient(rgba(250, 249, 246, 0.8), rgba(243, 241, 237, 0.8)), url(https://abrakadabra.fun/uploads/posts/2021-12/1639858433_2-abrakadabra-fun-p-cherno-belii-fon-dlya-prezentatsii-2.jpg) center/cover`, 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        flexDirection: 'column', 
+        position: 'relative' 
+      }}>
         <div style={{ width: '100%', maxWidth: 400, padding: 24 }}>
 
 
-          <div style={{ background: '#fff', borderRadius: 20, padding: 32, border: '1px solid #e0e0e0' }}>
+          <div style={{ background: 'var(--bg)', borderRadius: 24, padding: 36, border: '1px solid var(--border)', boxShadow: '0 10px 40px rgba(0,0,0,0.03)' }}>
             {/* Tabs */}
-            <div style={{ display: 'flex', marginBottom: 28, borderRadius: 12, overflow: 'hidden', background: '#f5f5f5' }}>
-              <button onClick={() => { setAuthMode('register'); setAuthStep(0); }} style={{ flex: 1, padding: '12px', fontSize: 13, border: 'none', cursor: 'pointer', background: isReg ? '#111' : 'transparent', color: isReg ? '#fff' : '#999', fontWeight: 600, borderRadius: 10, transition: 'all 0.2s' }}>
+            <div style={{ display: 'flex', marginBottom: 32, borderRadius: 14, overflow: 'hidden', background: 'var(--bg2)', padding: 4 }}>
+              <button onClick={() => { setAuthMode('register'); setAuthStep(0); }} style={{ flex: 1, padding: '12px', fontSize: 13, border: 'none', cursor: 'pointer', background: isReg ? 'var(--accent)' : 'transparent', color: isReg ? 'var(--bg)' : 'var(--text3)', fontWeight: 600, borderRadius: 10, transition: 'all 0.2s' }}>
                 {settingsStore.get().lang === 'ru' ? 'Регистрация' : 'Register'}
               </button>
-              <button onClick={() => setAuthMode('login')} style={{ flex: 1, padding: '12px', fontSize: 13, border: 'none', cursor: 'pointer', background: !isReg ? '#111' : 'transparent', color: !isReg ? '#fff' : '#999', fontWeight: 600, borderRadius: 10, transition: 'all 0.2s' }}>
+              <button onClick={() => setAuthMode('login')} style={{ flex: 1, padding: '12px', fontSize: 13, border: 'none', cursor: 'pointer', background: !isReg ? 'var(--accent)' : 'transparent', color: !isReg ? 'var(--bg)' : 'var(--text3)', fontWeight: 600, borderRadius: 10, transition: 'all 0.2s' }}>
                 {settingsStore.get().lang === 'ru' ? 'Вход' : 'Login'}
               </button>
             </div>
@@ -244,8 +262,8 @@ function App() {
             {/* Step indicator for register */}
             {isReg && (
               <div style={{ display: 'flex', gap: 8, marginBottom: 24, justifyContent: 'center' }}>
-                <div style={{ width: 32, height: 3, borderRadius: 2, background: '#111', opacity: authStep === 0 ? 1 : 0.15, transition: 'opacity 0.3s' }} />
-                <div style={{ width: 32, height: 3, borderRadius: 2, background: '#111', opacity: authStep === 1 ? 1 : 0.15, transition: 'opacity 0.3s' }} />
+                <div style={{ width: 32, height: 3, borderRadius: 2, background: 'var(--accent)', opacity: authStep === 0 ? 1 : 0.15, transition: 'opacity 0.3s' }} />
+                <div style={{ width: 32, height: 3, borderRadius: 2, background: 'var(--accent)', opacity: authStep === 1 ? 1 : 0.15, transition: 'opacity 0.3s' }} />
               </div>
             )}
 
@@ -254,8 +272,8 @@ function App() {
               {regStep1 && (
                 <>
                   <div style={{ textAlign: 'center', marginBottom: 8 }}>
-                    <div style={{ fontSize: 18, fontWeight: 600, color: '#111', marginBottom: 4 }}>{settingsStore.get().lang === 'ru' ? 'Как вас зовут?' : 'What is your name?'}</div>
-                    <div style={{ fontSize: 12, color: '#999' }}>{settingsStore.get().lang === 'ru' ? 'Это имя увидят другие' : 'Others will see this name'}</div>
+                    <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>{settingsStore.get().lang === 'ru' ? 'Как вас зовут?' : 'What is your name?'}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text3)' }}>{settingsStore.get().lang === 'ru' ? 'Это имя увидят другие' : 'Others will see this name'}</div>
                   </div>
                   <input type="text" value={name} onChange={e => setName(e.target.value.slice(0, 16))} placeholder={t('enterName')} maxLength={16} style={inp} autoFocus
                     onKeyDown={e => e.key === 'Enter' && nextStep()} />
@@ -266,8 +284,8 @@ function App() {
               {regStep2 && (
                 <>
                   <div style={{ textAlign: 'center', marginBottom: 8 }}>
-                    <div style={{ fontSize: 18, fontWeight: 600, color: '#111', marginBottom: 4 }}>{settingsStore.get().lang === 'ru' ? `Привет, ${name}!` : `Hello, ${name}!`}</div>
-                    <div style={{ fontSize: 12, color: '#999' }}>{settingsStore.get().lang === 'ru' ? 'Создайте аккаунт' : 'Create your account'}</div>
+                    <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>{settingsStore.get().lang === 'ru' ? `Привет, ${name}!` : `Hello, ${name}!`}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text3)' }}>{settingsStore.get().lang === 'ru' ? 'Создайте аккаунт' : 'Create your account'}</div>
                   </div>
                   <input type="email" value={email} onChange={e => setEmail(e.target.value.slice(0, 50))} placeholder="Email" maxLength={50} style={inp} autoFocus
                     onKeyDown={e => e.key === 'Enter' && nextStep()} />
@@ -290,12 +308,12 @@ function App() {
 
               <div style={{ display: 'flex', gap: 10 }}>
                 {regStep2 && (
-                  <button onClick={() => setAuthStep(0)} style={{ padding: '16px 20px', borderRadius: 14, background: '#f5f5f5', color: '#666', fontSize: 14, border: '1px solid #e0e0e0', cursor: 'pointer' }}>
+                  <button onClick={() => setAuthStep(0)} style={{ padding: '16px 20px', borderRadius: 14, background: 'var(--bg3)', color: 'var(--text2)', fontSize: 14, border: '1px solid var(--border)', cursor: 'pointer' }}>
                     {settingsStore.get().lang === 'ru' ? 'Назад' : 'Back'}
                   </button>
                 )}
                 <button onClick={nextStep}
-                  style={{ flex: 1, padding: 16, borderRadius: 14, background: '#111', color: '#fff', fontSize: 16, fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
+                  style={{ flex: 1, padding: 16, borderRadius: 14, background: 'var(--accent)', color: 'var(--bg)', fontSize: 16, fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
                   {regStep1 ? (settingsStore.get().lang === 'ru' ? 'Далее' : 'Next') : (isReg ? t('register') : (settingsStore.get().lang === 'ru' ? 'Войти' : 'Sign In'))}
                 </button>
               </div>

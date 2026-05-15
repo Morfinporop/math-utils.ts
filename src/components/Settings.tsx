@@ -38,16 +38,14 @@ export function Settings({ onClose, onLogout }: Props) {
         </div>
 
         {/* Translation Toggle */}
-        <div style={{ marginBottom: 24, padding: '16px 0', borderTop: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 14, color: 'var(--text)' }}>{t('translate')}</span>
-            <button 
-              onClick={() => settingsStore.setTranslate(!s.translate)}
-              style={{ width: 44, height: 24, borderRadius: 20, background: s.translate ? 'var(--accent)' : 'var(--bg3)', border: 'none', cursor: 'pointer', position: 'relative', transition: 'all 0.2s' }}
-            >
-              <div style={{ position: 'absolute', top: 3, left: s.translate ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: s.translate ? 'var(--bg)' : 'var(--text2)', transition: 'all 0.2s' }} />
-            </button>
-          </div>
+        <div style={{ marginBottom: 24, padding: '16px 0', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 14, color: 'var(--text)' }}>{t('translate')}</span>
+          <button 
+            onClick={() => settingsStore.setTranslate(!s.translate)}
+            style={{ width: 44, height: 24, borderRadius: 20, background: s.translate ? 'var(--accent)' : 'var(--bg3)', border: 'none', cursor: 'pointer', position: 'relative', transition: 'all 0.2s' }}
+          >
+            <div style={{ position: 'absolute', top: 3, left: s.translate ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: s.translate ? 'var(--bg)' : 'var(--text2)', transition: 'all 0.2s' }} />
+          </button>
         </div>
 
         {/* Danger Zone */}
